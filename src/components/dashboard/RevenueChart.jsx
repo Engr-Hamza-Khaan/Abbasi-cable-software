@@ -89,7 +89,7 @@ function RevenueChart() {
                 boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
               }}
               formatter={(value, name) => {
-                return [`${value.toLocaleString()}`, name]
+                return [`or ${value.toLocaleString()}`, name]
               }
               }
             />

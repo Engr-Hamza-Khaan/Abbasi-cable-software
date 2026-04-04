@@ -21,8 +21,10 @@ const TransactionTable = ({ transactions, onDelete }) => {
           <tr className="bg-slate-50 dark:bg-slate-900/50">
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Transaction</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cash</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Credit</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Source</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Type / Amount</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</th>
             <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-sans">Actions</th>
           </tr>
         </thead>
@@ -45,6 +47,16 @@ const TransactionTable = ({ transactions, onDelete }) => {
                     </div>
                   )}
                 </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                  Rs. {Number(tx.cashAmount !== undefined ? tx.cashAmount : tx.amount).toLocaleString()}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className={`text-sm font-bold ${tx.creditAmount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                  Rs. {Number(tx.creditAmount || 0).toLocaleString()}
+                </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold border ${

@@ -41,7 +41,9 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
     const dataToExport = filteredTransactions.map(tx => ({
       Date: tx.date,
       Type: tx.type.toUpperCase(),
-      Amount: tx.amount,
+      Cash: tx.cashAmount !== undefined ? tx.cashAmount : tx.amount,
+      Credit: tx.creditAmount || 0,
+      Total: tx.amount,
       Source: tx.source.charAt(0).toUpperCase() + tx.source.slice(1),
       Description: tx.description,
       Reference: tx.referenceId || 'N/A'
