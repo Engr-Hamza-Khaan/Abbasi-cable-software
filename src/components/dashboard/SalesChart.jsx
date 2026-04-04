@@ -9,9 +9,9 @@ import {
 
 function SalesChart() {
     const data = [
-        { name: "Electronics", value: 45, color: '#3b82f6' },
-        { name: "Clothing", value: 30, color: '#8b5cf6' },
-        { name: "Books", value: 15, color: '#10b981' },
+        { name: "Credit", value: 45, color: '#3b82f6' },
+        { name: "Cash", value: 30, color: '#8b5cf6' },
+        { name: "Bank Transfer", value: 15, color: '#10b981' },
         { name: "Other", value: 10, color: '#f59e0b' },
     ];
 
@@ -20,10 +20,10 @@ function SalesChart() {
     border-slate-200/50 dark:border-slate-700/50'>
             <div className="mb-6">
                 <h3 className='text-lg font-bold text-slate-800 dark:text-white'>
-                    Sales by Category
+                    Cash Flow Distribution
                 </h3>
                 <p className='text-sm text-slate-500 dark:text-slate-400'>
-                    Production Distribution
+                    Distribution of Cash Flows
                 </p>
             </div>
             <div className="h-48">
@@ -31,17 +31,17 @@ function SalesChart() {
                     <PieChart>
                         <defs>
                             {/* Gradients for each category */}
-                            <linearGradient id="electronicsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="creditGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#3b82f6" />
                                 <stop offset="100%" stopColor="#60a5fa" />
                             </linearGradient>
 
-                            <linearGradient id="clothingGradient" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="cashGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#8b5cf6" />
                                 <stop offset="100%" stopColor="#a78bfa" />
                             </linearGradient>
 
-                            <linearGradient id="booksGradient" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="bankTransferGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#10b981" />
                                 <stop offset="100%" stopColor="#34d399" />
                             </linearGradient>
@@ -61,12 +61,20 @@ function SalesChart() {
                             paddingAngle={5}
                             cornerRadius={5}
                         >
-                            {data.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={`url(#${entry.name.toLowerCase()}Gradient)`}
-                                />
-                            ))}
+                            {data.map((entry, index) => {
+                                const gradientMap = {
+                                    "Credit": "creditGradient",
+                                    "Cash": "cashGradient",
+                                    "Bank Transfer": "bankTransferGradient",
+                                    "Other": "otherGradient"
+                                };
+                                return (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={`url(#${gradientMap[entry.name]})`}
+                                    />
+                                );
+                            })}
                         </Pie>
                         <Tooltip
                             contentStyle={{

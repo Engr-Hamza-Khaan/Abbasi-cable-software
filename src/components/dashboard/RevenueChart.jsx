@@ -79,7 +79,7 @@ function RevenueChart() {
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `$${value / 1000}k`}
+              tickFormatter={(value) => `${value / 1000}k`}
             />
             <Tooltip
               contentStyle={{
@@ -89,7 +89,7 @@ function RevenueChart() {
                 boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
               }}
               formatter={(value, name) => {
-                return [`$${value.toLocaleString()}`, name]
+                return [`${value.toLocaleString()}`, name]
               }
               }
             />

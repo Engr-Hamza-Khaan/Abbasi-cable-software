@@ -24,7 +24,6 @@ const menuItems = [
     id: 'dashboard',
     icon: LayoutDashboard,
     label: "Dashboard",
-    active: true,
     badge: "New",
   },
   {
@@ -68,7 +67,7 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
     setExpandedItems(newExpended);
   };
 
-  return ( 
+  return (
     <div className={`${collapsed ? 'w-20' : 'w-72'} transition-[width] duration-500 ease-in-out bg-white/80 dark:bg-slate-900/80
     backdrop-blur-xl border-r border-slate-200/50 dark:border-slate-700/50 flex flex-col relative z-10`}>
       {/* Logo */}
@@ -81,7 +80,7 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
           {/* Conditional Rendering */}
           {!collapsed && (
             <div>
-              <h1 className='text-xl font-bold text-slate-800 dark:text-white'>Nexus</h1>
+              <h1 className='text-xl font-bold text-slate-800 dark:text-white'>SBMS</h1>
               <p className='text-xs text-slate-500 dark:text-slate-400'>Admin Panel</p>
             </div>
           )}
@@ -94,10 +93,10 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
           return (
             <div key={item.id}>
               <button className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 
-                ${currentPage === item.id || item.active 
-                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 " 
-                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 "
-                }`} onClick={() => { 
+                ${currentPage === item.id
+                  ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 "
+                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 "
+                }`} onClick={() => {
                   if (item.submenu) {
                     toogleExpended(item.id);
                   } else {
@@ -108,11 +107,11 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
                 <div className="flex items-center space-x-3">
                   <item.icon className={`w-5 h-5`} />
                   {/* Conditional Rendering */}
-                  
-                    {!collapsed && (
-                      <>
+
+                  {!collapsed && (
+                    <>
                       <span className='font-medium ml-2'>{item.label}</span>
-                      
+
                       {item.badge && (
                         <span className="px-2 py-1 text-xs bg-red-500 text-white rounded-full">
                           {item.badge}
@@ -128,10 +127,10 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
                         </span>
                       )}
                     </>
-                    )}
-                    
+                  )}
 
-                  
+
+
                 </div>
 
                 {!collapsed && item.submenu && (
@@ -203,11 +202,9 @@ export default Sidebar
 // import profileImage from "../../assets/profilePic.jpg";
 
 // const menuItems = [
-//   {
 //     id: "dashboard",
 //     icon: LayoutDashboard,
 //     label: "Dashboard",
-//     active: true,
 //     badge: "New",
 //   },
 //   {
@@ -319,9 +316,8 @@ export default Sidebar
 //                 if (item.submenu) toggleExpanded(item.id);
 //                 else onPageChange(item.id);
 //               }}
-//               className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 
 //                 ${
-//                   currentPage === item.id || item.active
+//                   currentPage === item.id
 //                     ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25"
 //                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50"
 //                 }`}
