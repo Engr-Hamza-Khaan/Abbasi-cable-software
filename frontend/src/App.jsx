@@ -15,14 +15,43 @@ function App() {
   // Lifted Inventory State
   const [products, setProducts] = useState(() => {
     const item = window.localStorage.getItem('inventory-products');
-    return item ? JSON.parse(item) : [
-      { id: 1, name: 'Copper Cable 2.5mm', unit: 'meter', stock: 1250, minStock: 200 },
-      { id: 2, name: 'Copper Cable 4.0mm', unit: 'meter', stock: 840, minStock: 150 },
-      { id: 3, name: 'Armored Cable 10mm', unit: 'meter', stock: 45, minStock: 100 },
-      { id: 4, name: 'Flexible Cable 1.5mm', unit: 'meter', stock: 2100, minStock: 300 },
-      { id: 5, name: 'Control Cable 7 Core', unit: 'meter', stock: 320, minStock: 50 },
+    const initialProducts = [
+      { 
+        id: 1, name: 'Copper Cable 2.5mm', unit: 'meter', minStock: 200,
+        variants: [
+          { id: 'v1', label: 'Batch A - 100m', stock: 50, unitPrice: 120, date: '2025-03-20' },
+          { id: 'v2', label: 'Batch B - 150m', stock: 1200, unitPrice: 115, date: '2025-04-05' }
+        ]
+      },
+      { 
+        id: 2, name: 'Copper Cable 4.0mm', unit: 'meter', minStock: 150,
+        variants: [{ id: 'v3', label: 'Main Stock', stock: 840, unitPrice: 180, date: '2025-03-15' }]
+      },
+      { 
+        id: 3, name: 'Armored Cable 10mm', unit: 'meter', minStock: 100,
+        variants: [{ id: 'v4', label: 'Warehouse A', stock: 45, unitPrice: 850, date: '2025-04-01' }]
+      },
     ];
+
+    if (item) {
+      const parsed = JSON.parse(item);
+      // Migration: Ensure all old products have a variants array
+      return parsed.map(p => ({
+        ...p,
+        variants: p.variants || [
+          { id: Date.now() + Math.random(), label: 'Default Batch', stock: p.stock || 0, unitPrice: 0 }
+        ],
+        stock: undefined // We will compute this dynamically
+      }));
+    }
+    return initialProducts;
   });
+
+  // Derived state to get total stock for display
+  const productsWithTotalStock = products.map(p => ({
+    ...p,
+    stock: p.variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0)
+  }));
   
   const [purchases, setPurchases] = useState(() => {
     const item = window.localStorage.getItem('inventory-purchases');
@@ -168,10 +197,11 @@ function App() {
           {/* Main Content Area */}
           <main className="flex-1 overflow-y-auto bg-transparent">
             <div className="p-6 space-y-6">
-              {currentPage === 'dashboard' && <Dashboard products={products} sales={sales} purchases={purchases} />}
+              {currentPage === 'dashboard' && <Dashboard products={productsWithTotalStock} sales={sales} purchases={purchases} />}
               {currentPage === 'inventory' && (
                 <InventoryWrapper 
-                  products={products} setProducts={setProducts} 
+                  products={productsWithTotalStock} 
+                  setProducts={setProducts} 
                   purchases={purchases} setPurchases={setPurchases} 
                   sales={sales} setSales={setSales} 
                 />

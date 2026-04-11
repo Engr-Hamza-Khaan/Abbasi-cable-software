@@ -4,9 +4,10 @@ import { ShoppingCart, Calendar, Tag, PlusCircle, History } from 'lucide-react';
 const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
   const [formData, setFormData] = useState({
     productId: '',
-    quantity: 1,
+    length: 1,
     unitPrice: 0,
     vendor: '',
+    batchLabel: '',
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -14,20 +15,31 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.productId || formData.quantity <= 0) {
-      alert("Please select a product and valid quantity.");
+    if (!formData.productId || formData.length <= 0) {
+      alert("Please select a product and valid length.");
       return;
     }
 
     const selectedProduct = products.find(p => p.id === parseInt(formData.productId));
     if (!selectedProduct) return;
 
-    // Update product stock
-    const updatedProducts = products.map(p => 
-      p.id === selectedProduct.id 
-        ? { ...p, stock: p.stock + parseInt(formData.quantity) } 
-        : p
-    );
+    // Update product variants
+    const updatedProducts = products.map(p => {
+      if (p.id === selectedProduct.id) {
+        const newBatch = {
+          id: Date.now() + Math.random(),
+          label: formData.batchLabel || `Purchase - ${formData.date}`,
+          stock: parseInt(formData.length),
+          unitPrice: parseFloat(formData.unitPrice),
+          date: formData.date
+        };
+        return {
+          ...p,
+          variants: [...(p.variants || []), newBatch]
+        };
+      }
+      return p;
+    });
     setProducts(updatedProducts);
 
     // Record purchase
@@ -35,18 +47,19 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
       ...formData,
       id: Date.now(),
       productName: selectedProduct.name,
-      total: formData.quantity * formData.unitPrice
+      total: formData.length * formData.unitPrice
     };
     setPurchases([newPurchase, ...purchases]);
 
     // Success message and reset
-    setMessage(`Successfully added ${formData.quantity} ${selectedProduct.unit}s to ${selectedProduct.name}`);
+    setMessage(`Successfully added ${formData.length} ${selectedProduct.unit}s to ${selectedProduct.name}`);
     setTimeout(() => setMessage(''), 3000);
     setFormData({
       productId: '',
-      quantity: 1,
+      length: 1,
       unitPrice: 0,
       vendor: '',
+      batchLabel: '',
       date: new Date().toISOString().split('T')[0]
     });
   };
@@ -75,7 +88,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
               required
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
               value={formData.productId}
-              onChange={(e) => setFormData({...formData, productId: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
             >
               <option value="">-- Choose Product --</option>
               {products.map(p => (
@@ -84,16 +97,30 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
             </select>
           </div>
 
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Batch Label / Roll Details</label>
+            <div className="relative">
+              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="e.g. 100ft Roll - Premium"
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                value={formData.batchLabel}
+                onChange={(e) => setFormData({ ...formData, batchLabel: e.target.value })}
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Quantity</label>
+              <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Length</label>
               <input
                 required
                 type="number"
                 min="1"
                 className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-                value={formData.quantity}
-                onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 0})}
+                value={formData.length}
+                onChange={(e) => setFormData({ ...formData, length: parseInt(e.target.value) || 0 })}
               />
             </div>
             <div className="space-y-1">
@@ -104,7 +131,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
                 min="0"
                 className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
                 value={formData.unitPrice}
-                onChange={(e) => setFormData({...formData, unitPrice: parseFloat(e.target.value) || 0})}
+                onChange={(e) => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })}
               />
             </div>
           </div>
@@ -116,7 +143,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
               placeholder="e.g. Copper King Ltd."
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
               value={formData.vendor}
-              onChange={(e) => setFormData({...formData, vendor: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
             />
           </div>
 
@@ -127,7 +154,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
               type="date"
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
               value={formData.date}
-              onChange={(e) => setFormData({...formData, date: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
             />
           </div>
 
@@ -162,7 +189,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
                       <span className="text-blue-600 dark:text-blue-400 font-bold">RD. {p.total.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-xs text-slate-500">
-                      <span>{p.quantity} Units from {p.vendor || 'Unknown'}</span>
+                      <span>{p.length} Units from {p.vendor || 'Unknown'}</span>
                       <span>{p.date}</span>
                     </div>
                   </div>

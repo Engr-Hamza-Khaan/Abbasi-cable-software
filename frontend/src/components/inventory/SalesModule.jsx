@@ -4,6 +4,7 @@ import { Send, User, ChevronRight, AlertCircle, ShoppingBag } from 'lucide-react
 const SalesModule = ({ products, setProducts, sales, setSales }) => {
   const [formData, setFormData] = useState({
     productId: '',
+    variantId: '',
     quantity: 1,
     customer: '',
     date: new Date().toISOString().split('T')[0]
@@ -17,7 +18,7 @@ const SalesModule = ({ products, setProducts, sales, setSales }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!formData.productId || formData.quantity <= 0) {
       setError("Please select a product and valid quantity.");
       return;
@@ -25,17 +26,32 @@ const SalesModule = ({ products, setProducts, sales, setSales }) => {
 
     if (!selectedProduct) return;
 
-    if (selectedProduct.stock < formData.quantity) {
-      setError(`Insufficient stock. Current stock for ${selectedProduct.name} is ${selectedProduct.stock}`);
+    const selectedVariant = selectedProduct.variants.find(v => v.id.toString() === formData.variantId.toString());
+    
+    if (!selectedVariant) {
+      setError("Please select a valid batch/variant.");
       return;
     }
 
-    // Update product stock
-    const updatedProducts = products.map(p => 
-      p.id === selectedProduct.id 
-        ? { ...p, stock: p.stock - parseInt(formData.quantity) } 
-        : p
-    );
+    if (selectedVariant.stock < formData.quantity) {
+      setError(`Insufficient stock in this batch. Available: ${selectedVariant.stock}`);
+      return;
+    }
+
+    // Update product stock within variants
+    const updatedProducts = products.map(p => {
+      if (p.id === selectedProduct.id) {
+        return {
+          ...p,
+          variants: p.variants.map(v => 
+            v.id.toString() === formData.variantId.toString() 
+              ? { ...v, stock: v.stock - parseInt(formData.quantity) } 
+              : v
+          )
+        };
+      }
+      return p;
+    });
     setProducts(updatedProducts);
 
     // Record sales
@@ -52,6 +68,7 @@ const SalesModule = ({ products, setProducts, sales, setSales }) => {
     setTimeout(() => setMessage(''), 3000);
     setFormData({
       productId: '',
+      variantId: '',
       quantity: 1,
       customer: '',
       date: new Date().toISOString().split('T')[0]
@@ -89,14 +106,33 @@ const SalesModule = ({ products, setProducts, sales, setSales }) => {
               required
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
               value={formData.productId}
-              onChange={(e) => setFormData({...formData, productId: e.target.value})}
+              onChange={(e) => setFormData({...formData, productId: e.target.value, variantId: ''})}
             >
               <option value="">-- Select Cable Type --</option>
               {products.map(p => (
-                <option key={p.id} value={p.id}>{p.name} (Available: {p.stock} {p.unit}s)</option>
+                <option key={p.id} value={p.id}>{p.name} (Total: {p.stock} {p.unit}s)</option>
               ))}
             </select>
           </div>
+
+          {selectedProduct && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Select Specific Batch / Variant</label>
+              <select
+                required
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                value={formData.variantId}
+                onChange={(e) => setFormData({...formData, variantId: e.target.value})}
+              >
+                <option value="">-- Choose Batch --</option>
+                {selectedProduct.variants && selectedProduct.variants.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.label} (Avail: {v.stock} {selectedProduct.unit}s) - Rs. {v.unitPrice}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
