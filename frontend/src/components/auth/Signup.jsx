@@ -7,9 +7,11 @@ import { UserPlus, User, Lock, AlertCircle, Loader2, Cable, ShieldCheck } from '
 const Signup = () => {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -19,9 +21,12 @@ const Signup = () => {
     setError('');
     setLoading(true);
 
-    const result = await signup(name, username, password, role);
+    const result = await signup(name, username, email, password, role);
     if (result.success) {
-      navigate('/');
+      setSuccess('Account created successfully! Redirecting to login...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } else {
       setError(result.message);
     }
@@ -77,6 +82,20 @@ const Signup = () => {
             </div>
 
             <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-300 ml-1">Email Address</label>
+              <div className="relative group">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full px-5 py-3 bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                  placeholder="admin@example.com"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
               <label className="text-sm font-semibold text-slate-300 ml-1">Password</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -91,6 +110,9 @@ const Signup = () => {
                   placeholder="••••••••"
                 />
               </div>
+              <p className="text-[10px] text-slate-500 ml-1 mt-1">
+                Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char.
+              </p>
             </div>
 
             <div className="space-y-1">
@@ -131,6 +153,17 @@ const Signup = () => {
               >
                 <AlertCircle className="h-4 w-4" />
                 <span>{error}</span>
+              </motion.div>
+            )}
+
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 text-green-400 text-xs rounded-xl"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                <span>{success}</span>
               </motion.div>
             )}
 

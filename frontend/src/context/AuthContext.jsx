@@ -39,18 +39,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (name, username, password, role) => {
+  const signup = async (name, username, email, password, role) => {
     try {
       const response = await axios.post('http://localhost:5000/api/auth/register', {
         name,
         username,
+        email,
         password,
         role,
       });
-      setUser(response.data);
-      localStorage.setItem('abbasi-cable-user', JSON.stringify(response.data));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-      return { success: true };
+      return { success: true, message: response.data.message };
     } catch (error) {
       return {
         success: false,

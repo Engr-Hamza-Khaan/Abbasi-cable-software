@@ -23,19 +23,47 @@ const User = sequelize.define('User', {
       notEmpty: { msg: 'Please add a username' },
     },
   },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: { msg: 'Please add a valid email' },
+      notEmpty: { msg: 'Please add an email' },
+    },
+  },
   password: {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
-      len: {
-        args: [6],
-        msg: 'Password must be at least 6 characters',
+      isStrongPassword(value) {
+        if (value.length < 8) {
+          throw new Error('Password must be at least 8 characters long');
+        }
+        if (!/[A-Z]/.test(value)) {
+          throw new Error('Password must contain at least one uppercase letter');
+        }
+        if (!/[a-z]/.test(value)) {
+          throw new Error('Password must contain at least one lowercase letter');
+        }
+        if (!/[0-9]/.test(value)) {
+          throw new Error('Password must contain at least one number');
+        }
+        if (!/[!@#$%^&*]/.test(value)) {
+          throw new Error('Password must contain at least one special character (!@#$%^&*)');
+        }
       },
     },
   },
   role: {
     type: DataTypes.ENUM('admin', 'user'),
     defaultValue: 'user',
+  },
+  resetPasswordToken: {
+    type: DataTypes.STRING,
+  },
+  resetPasswordExpire: {
+    type: DataTypes.DATE,
   },
 }, {
   hooks: {

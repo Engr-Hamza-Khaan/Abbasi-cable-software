@@ -77,6 +77,11 @@ const Login = () => {
                   placeholder="••••••••"
                 />
               </div>
+              <div className="flex justify-end mt-2">
+                <Link to="/forgot-password" size="sm" className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
             {error && (
