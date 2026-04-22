@@ -1,5 +1,6 @@
 // With Framer Motion
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   BarChart3,
   Calendar,
@@ -19,42 +20,35 @@ import {
 
 import profileImage from '../../assets/profilePic.jpg'
 
-const menuItems = [
-  {
-    id: 'dashboard',
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    badge: "New",
+const adminMenuItems = [
+  { id: 'dashboard', icon: LayoutDashboard, label: "Dashboard", badge: "New" },
+  { id: 'inventory', icon: Package, label: "Inventory" },
+  { id: 'cash-flow', icon: CreditCard, label: "Cash Flow" },
+  { id: 'attendance', icon: Calendar, label: "Attendance" },
+  { id: 'manufacturing', icon: Zap, label: "Manufacturing" },
+  { id: 'zakat', icon: DollarSignIcon, label: "Zakat" },
+  { 
+    id: 'expense', 
+    icon: ShoppingBag, 
+    label: "Expense",
+    submenu: [
+      { id: 'expense-home', label: "Home" },
+      { id: 'expense-shop', label: "Shop" },
+      { id: 'expense-transport', label: "Transport" },
+    ]
   },
-  {
-    id: 'inventory',
-    icon: Package,
-    label: "Inventory",
-    count: '847',
-  },
-  {
-    id: 'cash-flow',
-    icon: CreditCard,
-    label: "Cash Flow",
-  },
-  {
-    id: 'attendance',
-    icon: Calendar,
-    label: "Attendance",
-  },
-  {
-    id: 'reports',
-    icon: FileText,
-    label: "Reports",
-  },
-  {
-    id: 'settings',
-    icon: Settings,
-    label: "Settings",
-  },
-
+  { id: 'reports', icon: FileText, label: "Reports" },
+  { id: 'settings', icon: Settings, label: "Settings" },
 ];
-function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCount }) {
+
+const userMenuItems = [
+  { id: 'inventory', icon: Package, label: "Inventory" },
+  { id: 'reports', icon: FileText, label: "Reports" },
+];
+
+function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCount, user, onLogout }) {
+  const navigate = useNavigate();
+  const menuItems = user?.role === 'admin' ? adminMenuItems : userMenuItems;
   const [expandeditems, setExpandedItems] = useState(new Set(['analytics']));
   const toogleExpended = (itemid) => {
     const newExpended = new Set(expandeditems);
@@ -101,6 +95,7 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
                     toogleExpended(item.id);
                   } else {
                     onPageChange(item.id);
+                    navigate(`/${item.id}`);
                   }
                 }}>
 
@@ -142,9 +137,20 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
               {!collapsed && item.submenu && expandeditems.has(item.id) && (
                 <div className='ml-8 mt-2 space-y-1'>
                   {item.submenu.map((subitem) => {
-                    return <button className='w-full text-left p-2 text-sm text-slate-600
-                    dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200
-                    hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-lg transition-all'>{subitem.label}</button>
+                    return <button 
+                      key={subitem.id}
+                      onClick={() => {
+                        onPageChange(subitem.id);
+                        navigate(`/${subitem.id}`);
+                      }}
+                      className={`w-full text-left p-2 text-sm rounded-lg transition-all 
+                        ${currentPage === subitem.id 
+                          ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20 font-bold" 
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                        }`}
+                    >
+                      {subitem.label}
+                    </button>
                   })}
                 </div>
               )}
@@ -158,20 +164,26 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
       {!collapsed && (
         <div className='p-4 border-t border-slate-200/50 dark:border-slate-700/50'>
           <div className='flex items-center space-x-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50'>
-            <img
-              src={profileImage}
-              alt="User"
-              className='w-10 h-10 rounded-full ring-2 ring-blue-500' />
+            <div className='w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold ring-2 ring-blue-500'>
+              {user?.name?.charAt(0) || 'U'}
+            </div>
             <div className='flex-1 min-w-0'>
               <div className='flex-1 min-w-0'>
                 <p className='text-sm font-medium text-slate-800 dark:text-white truncate'>
-                  Hamza Khan
+                  {user?.name || 'User'}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                  Administrator
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate capitalize">
+                  {user?.role || 'Staff'}
                 </p>
               </div>
             </div>
+            <button 
+              onClick={onLogout}
+              className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+              title="Logout"
+            >
+              <icons.LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

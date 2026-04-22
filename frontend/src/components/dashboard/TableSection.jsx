@@ -1,4 +1,4 @@
-import { MoreHorizontal, TrendingUp, TrendingDown} from 'lucide-react'
+import { MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react'
 
 function TableSection({ products = [], sales = [] }) {
     // Transform sales to match recentOrder format
@@ -6,7 +6,7 @@ function TableSection({ products = [], sales = [] }) {
         id: `#${s.id.toString().slice(-4)}`,
         customer: s.customer || "Walking Customer",
         product: s.productName,
-        amount: `RD. ${s.total.toLocaleString()}`,
+        amount: `${s.total.toLocaleString()} PKR`,
         status: "Completed",
         date: s.date,
     }));
@@ -38,7 +38,7 @@ function TableSection({ products = [], sales = [] }) {
         return {
             name: name,
             sales: `${productSales[name]} Units`,
-            revenue: `RD. ${(productSales[name] * 100).toLocaleString()}`, // Placeholder revenue logic
+            revenue: `${(productSales[name] * 100).toLocaleString()}PKR`, // Placeholder revenue logic
             trend: "up",
             change: "+100%"
         };
@@ -167,8 +167,8 @@ function TableSection({ products = [], sales = [] }) {
                 </div>
                 {/* Dynamic Data */}
                 <div className='p-6 space-y-4' >
-                {topProducts.map((product, index) => {
-                    return (
+                    {topProducts.map((product, index) => {
+                        return (
                             <div className='flex items-center justify-between p-4 rounded-xl hover:bg-slate-50
                               dark:hover:bg-slate-800/50 transition-colors' key={index}>
                                 <div className="flex-1">
@@ -184,13 +184,13 @@ function TableSection({ products = [], sales = [] }) {
                                         {product.revenue}
                                     </p>
                                     <div className='flex items-center space-x-1'>
-                                        {product.trend === 'up' ? (<TrendingUp className="w-3 h-3 text-emerald-500" />) : ( <TrendingDown className="w-3 h-3 text-red-500" /> ) }
+                                        {product.trend === 'up' ? (<TrendingUp className="w-3 h-3 text-emerald-500" />) : (<TrendingDown className="w-3 h-3 text-red-500" />)}
                                         <span>{product.change}</span>
                                     </div>
                                 </div>
                             </div>
-                    )
-                })}
+                        )
+                    })}
                 </div>
             </div>
         </div>

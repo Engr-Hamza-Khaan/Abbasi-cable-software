@@ -186,7 +186,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases }) => {
                   <div key={p.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
                     <div className="flex justify-between items-start mb-1">
                       <span className="font-semibold text-slate-800 dark:text-white">{p.productName}</span>
-                      <span className="text-blue-600 dark:text-blue-400 font-bold">RD. {p.total.toLocaleString()}</span>
+                      <span className="text-blue-600 dark:text-blue-400 font-bold">{p.total.toLocaleString()}PKR</span>
                     </div>
                     <div className="flex justify-between text-xs text-slate-500">
                       <span>{p.length} Units from {p.vendor || 'Unknown'}</span>

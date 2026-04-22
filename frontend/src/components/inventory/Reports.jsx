@@ -134,8 +134,8 @@ const Reports = ({ purchases, sales }) => {
                   <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
                     <td className="px-8 py-5 font-semibold text-slate-800 dark:text-slate-200">{p.productName}</td>
                     <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{p.quantity}</td>
-                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">RD. {p.unitPrice?.toLocaleString()}</td>
-                    <td className="px-8 py-5 font-bold text-slate-800 dark:text-white">RD. {p.total?.toLocaleString()}</td>
+                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{p.unitPrice?.toLocaleString()}PKR</td>
+                    <td className="px-8 py-5 font-bold text-slate-800 dark:text-white">{p.total?.toLocaleString()}PKR</td>
                     <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{p.vendor}</td>
                     <td className="px-8 py-5 text-slate-500 dark:text-slate-500 text-sm whitespace-nowrap">{p.date}</td>
                   </tr>
@@ -159,7 +159,7 @@ const Reports = ({ purchases, sales }) => {
                     <td className="px-8 py-5 font-semibold text-slate-800 dark:text-slate-200">{s.productName}</td>
                     <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.quantity}</td>
                     <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.customer}</td>
-                    <td className="px-8 py-5 font-bold text-slate-800 dark:text-white">RD. {s.total?.toLocaleString()}</td>
+                    <td className="px-8 py-5 font-bold text-slate-800 dark:text-white">{s.total?.toLocaleString()}PKR</td>
                     <td className="px-8 py-5 text-slate-500 dark:text-slate-500 text-sm whitespace-nowrap">{s.date}</td>
                   </tr>
                 ))}
