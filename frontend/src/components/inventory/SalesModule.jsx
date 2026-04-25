@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, User, ChevronRight, AlertCircle, ShoppingBag, Printer, FileText } from 'lucide-react';
+import { Send, User, ChevronRight, AlertCircle, ShoppingBag, Printer, FileText, Phone } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -14,6 +14,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
     paymentType: 'cash',
     paymentDetail: '',
     customer: '',
+    contact: '',
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -67,6 +68,10 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
     doc.text("Bill To:", pageWidth - 60, 48);
     doc.setFont(undefined, 'normal');
     doc.text(sale.customer || "Walk-in Customer", pageWidth - 60, 55);
+    if (sale.contact) {
+      doc.setFontSize(9);
+      doc.text(`Contact: ${sale.contact}`, pageWidth - 60, 60);
+    }
     
     // Table
     const specs = `${sale.size || ''} ${sale.type || ''} ${sale.core || ''}`.trim() || '-';
@@ -220,6 +225,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
       paymentType: 'cash',
       paymentDetail: '',
       customer: '',
+      contact: '',
       date: new Date().toISOString().split('T')[0]
     });
   };
@@ -455,18 +461,33 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
             </div>
           )}
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Customer / Project Name</label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input
-                required
-                type="text"
-                placeholder="e.g. Skyline Towers Maintenance"
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-                value={formData.customer}
-                onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Customer / Project Name</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Skyline Towers Maintenance"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                  value={formData.customer}
+                  onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Contact Number</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="e.g. 0300-1234567"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                  value={formData.contact}
+                  onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                />
+              </div>
             </div>
           </div>
 

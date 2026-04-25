@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Calendar, Tag, PlusCircle, History } from 'lucide-react';
+import { ShoppingCart, Calendar, Tag, PlusCircle, History, Phone } from 'lucide-react';
 
 const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCashTransactions }) => {
   const [formData, setFormData] = useState({
@@ -10,6 +10,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
     length: 1,
     unitPrice: 0,
     vendor: '',
+    contact: '',
     batchLabel: '',
     cashAmount: 0,
     onlineAmount: 0,
@@ -113,6 +114,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
       length: 1,
       unitPrice: 0,
       vendor: '',
+      contact: '',
       batchLabel: '',
       cashAmount: 0,
       onlineAmount: 0,
@@ -234,16 +236,31 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Vendor / Supplier</label>
-            <input
-              required
-              type="text"
-              placeholder="e.g. Copper King Ltd."
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-              value={formData.vendor}
-              onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Vendor / Supplier</label>
+              <input
+                required
+                type="text"
+                placeholder="e.g. Copper King Ltd."
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                value={formData.vendor}
+                onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Vendor Contact</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="e.g. 0300-1234567"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                  value={formData.contact}
+                  onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

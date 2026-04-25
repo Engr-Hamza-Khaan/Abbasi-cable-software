@@ -115,6 +115,10 @@ const Reports = ({ purchases, sales }) => {
     doc.text("Bill To:", pageWidth - 60, 48);
     doc.setFont(undefined, 'normal');
     doc.text(sale.customer || "Walk-in Customer", pageWidth - 60, 55);
+    if (sale.contact) {
+      doc.setFontSize(9);
+      doc.text(`Contact: ${sale.contact}`, pageWidth - 60, 60);
+    }
     
     // Table
     const specs = `${sale.size || ''} ${sale.type || ''} ${sale.core || ''}`.trim() || '-';
@@ -309,6 +313,7 @@ const Reports = ({ purchases, sales }) => {
                   <th className="px-8 py-4">Online</th>
                   <th className="px-8 py-4">Credit</th>
                   <th className="px-8 py-4">Vendor</th>
+                  <th className="px-8 py-4">Contact</th>
                   <th className="px-8 py-4">Date</th>
                 </tr>
               </thead>
@@ -346,6 +351,7 @@ const Reports = ({ purchases, sales }) => {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{p.vendor}</td>
+                    <td className="px-8 py-5 text-slate-500 dark:text-slate-400 text-xs">{p.contact || '-'}</td>
                     <td className="px-8 py-5 text-slate-500 dark:text-slate-500 text-sm whitespace-nowrap">{p.date}</td>
                   </tr>
                 ))}
@@ -365,6 +371,7 @@ const Reports = ({ purchases, sales }) => {
                   <th className="px-8 py-4">Online</th>
                   <th className="px-8 py-4">Credit</th>
                   <th className="px-8 py-4">Customer / Project</th>
+                  <th className="px-8 py-4">Contact</th>
                   <th className="px-8 py-4">Date</th>
                   <th className="px-8 py-4 text-center">Actions</th>
                 </tr>
@@ -404,6 +411,7 @@ const Reports = ({ purchases, sales }) => {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.customer}</td>
+                    <td className="px-8 py-5 text-slate-500 dark:text-slate-400 text-xs">{s.contact || '-'}</td>
                     <td className="px-8 py-5 text-slate-500 dark:text-slate-500 text-sm whitespace-nowrap">{s.date}</td>
                     <td className="px-8 py-5 text-center">
                        <button
