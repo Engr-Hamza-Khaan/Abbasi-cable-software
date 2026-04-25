@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Send, User, ChevronRight, AlertCircle, ShoppingBag } from 'lucide-react';
+import { Send, User, ChevronRight, AlertCircle, ShoppingBag, Printer, FileText } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactions }) => {
   const [formData, setFormData] = useState({
@@ -29,6 +31,94 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
 
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [lastSale, setLastSale] = useState(null);
+
+  const generateInvoice = (sale) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.text("ABBASI CABLE", pageWidth / 2, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text("High Quality Electric Cables & Wires", pageWidth / 2, 26, { align: 'center' });
+    doc.text("Contact: +92 XXX XXXXXXX | Address: Industrial Area, City", pageWidth / 2, 31, { align: 'center' });
+    
+    // Divider
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.line(15, 38, pageWidth - 15, 38);
+    
+    // Invoice Details
+    doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont(undefined, 'bold');
+    doc.text("SALES INVOICE", 15, 48);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Invoice #: INV-${sale.id.toString().slice(-6)}`, 15, 55);
+    doc.text(`Date: ${sale.date}`, 15, 60);
+    
+    // Customer Info
+    doc.setFont(undefined, 'bold');
+    doc.text("Bill To:", pageWidth - 60, 48);
+    doc.setFont(undefined, 'normal');
+    doc.text(sale.customer || "Walk-in Customer", pageWidth - 60, 55);
+    
+    // Table
+    const specs = `${sale.size || ''} ${sale.type || ''} ${sale.core || ''}`.trim() || '-';
+    autoTable(doc, {
+      startY: 70,
+      head: [['Product Description', 'Specs', 'Color', 'Qty/Length', 'Unit Price', 'Total']],
+      body: [[
+        sale.productName,
+        specs,
+        sale.color || '-',
+        sale.length,
+        `Rs. ${sale.price.toLocaleString()}`,
+        `Rs. ${sale.total.toLocaleString()}`
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 5 }
+    });
+    
+    const finalY = doc.lastAutoTable.finalY + 10;
+    
+    // Summary
+    doc.setFont(undefined, 'bold');
+    doc.text("Payment Summary:", 15, finalY);
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total Amount:`, 15, finalY + 7);
+    doc.text(`Rs. ${sale.total.toLocaleString()}`, 60, finalY + 7);
+    
+    doc.text(`Paid Amount (${sale.paymentType}):`, 15, finalY + 14);
+    doc.text(`Rs. ${sale.paidAmount.toLocaleString()}`, 60, finalY + 14);
+    
+    if (sale.credit > 0) {
+      doc.setTextColor(220, 38, 38); // red-600
+      doc.setFont(undefined, 'bold');
+      doc.text(`Remaining Balance:`, 15, finalY + 21);
+      doc.text(`Rs. ${sale.credit.toLocaleString()}`, 60, finalY + 21);
+    } else {
+      doc.setTextColor(22, 163, 74); // green-600
+      doc.setFont(undefined, 'bold');
+      doc.text(`Status: FULLY PAID`, 15, finalY + 21);
+    }
+    
+    // Footer Notes
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'italic');
+    doc.text("Note: Goods once sold will not be returned or exchanged after use.", 15, pageWidth > 250 ? 180 : 270);
+    doc.text("Thank you for your business!", pageWidth / 2, pageWidth > 250 ? 190 : 280, { align: 'center' });
+    
+    doc.save(`Invoice_${sale.customer.replace(/ /g, '_')}_${sale.date}.pdf`);
+  };
 
   const selectedProduct = products.find(p => p.id === parseInt(formData.productId));
 
@@ -92,6 +182,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
             (formData.cashAmount + formData.onlineAmount))
     };
     setSales([newSale, ...sales]);
+    setLastSale(newSale);
 
     // Sync with Cash Flow
     if (setCashTransactions) {
@@ -114,7 +205,11 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
 
     // Success message and reset
     setMessage(`Successfully issued ${formData.length} ${selectedProduct.unit}s of ${selectedProduct.name}`);
-    setTimeout(() => setMessage(''), 3000);
+    
+    // Automatically trigger invoice if needed or just provide button
+    // generateInvoice(newSale); // Uncomment to auto-download
+    
+    setTimeout(() => setMessage(''), 5000); // Increased timeout to see print button
     setFormData({
       productId: '',
       variantId: '',
@@ -148,8 +243,20 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
         )}
 
         {message && (
-          <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-4 rounded-xl mb-6 flex items-center border border-green-500/20">
-            {message}
+          <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 p-4 rounded-xl mb-6 flex flex-col space-y-3 border border-green-500/20 animate-in zoom-in duration-300">
+            <div className="flex items-center">
+               <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+               {message}
+            </div>
+            {lastSale && (
+              <button 
+                onClick={() => generateInvoice(lastSale)}
+                className="flex items-center justify-center space-x-2 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-bold shadow-sm"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Invoice</span>
+              </button>
+            )}
           </div>
         )}
 

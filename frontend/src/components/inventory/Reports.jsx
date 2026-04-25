@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, ArrowUpRight, ArrowDownLeft, FileText, Download, Calendar } from 'lucide-react';
+import { Search, Filter, ArrowUpRight, ArrowDownLeft, FileText, Download, Calendar, Printer } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -79,6 +79,93 @@ const Reports = ({ purchases, sales }) => {
     });
 
     doc.save(`${title.replace(/ /g, '_')}.pdf`);
+  };
+
+  const generateInvoice = (sale) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.text("ABBASI CABLE", pageWidth / 2, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text("High Quality Electric Cables & Wires", pageWidth / 2, 26, { align: 'center' });
+    doc.text("Contact: +92 XXX XXXXXXX | Address: Industrial Area, City", pageWidth / 2, 31, { align: 'center' });
+    
+    // Divider
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.line(15, 38, pageWidth - 15, 38);
+    
+    // Invoice Details
+    doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont(undefined, 'bold');
+    doc.text("SALES INVOICE", 15, 48);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Invoice #: INV-${sale.id.toString().slice(-6)}`, 15, 55);
+    doc.text(`Date: ${sale.date}`, 15, 60);
+    
+    // Customer Info
+    doc.setFont(undefined, 'bold');
+    doc.text("Bill To:", pageWidth - 60, 48);
+    doc.setFont(undefined, 'normal');
+    doc.text(sale.customer || "Walk-in Customer", pageWidth - 60, 55);
+    
+    // Table
+    const specs = `${sale.size || ''} ${sale.type || ''} ${sale.core || ''}`.trim() || '-';
+    autoTable(doc, {
+      startY: 70,
+      head: [['Product Description', 'Specs', 'Color', 'Qty/Length', 'Unit Price', 'Total']],
+      body: [[
+        sale.productName,
+        specs,
+        sale.color || '-',
+        sale.length,
+        `Rs. ${sale.price?.toLocaleString() || '0'}`,
+        `Rs. ${sale.total?.toLocaleString() || '0'}`
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 5 }
+    });
+    
+    const finalY = doc.lastAutoTable.finalY + 10;
+    
+    // Summary
+    doc.setFont(undefined, 'bold');
+    doc.text("Payment Summary:", 15, finalY);
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total Amount:`, 15, finalY + 7);
+    doc.text(`Rs. ${sale.total?.toLocaleString() || '0'}`, 60, finalY + 7);
+    
+    doc.text(`Paid Amount:`, 15, finalY + 14);
+    doc.text(`Rs. ${sale.paidAmount?.toLocaleString() || '0'}`, 60, finalY + 14);
+    
+    if (sale.credit > 0) {
+      doc.setTextColor(220, 38, 38); // red-600
+      doc.setFont(undefined, 'bold');
+      doc.text(`Remaining Balance:`, 15, finalY + 21);
+      doc.text(`Rs. ${sale.credit.toLocaleString()}`, 60, finalY + 21);
+    } else {
+      doc.setTextColor(22, 163, 74); // green-600
+      doc.setFont(undefined, 'bold');
+      doc.text(`Status: FULLY PAID`, 15, finalY + 21);
+    }
+    
+    // Footer Notes
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'italic');
+    doc.text("Note: Goods once sold will not be returned or exchanged after use.", 15, 270);
+    doc.text("Thank you for your business!", pageWidth / 2, 280, { align: 'center' });
+    
+    doc.save(`Invoice_${sale.customer?.replace(/ /g, '_') || 'Customer'}_${sale.date}.pdf`);
   };
 
   const purchaseData = purchases.filter(p =>
@@ -279,6 +366,7 @@ const Reports = ({ purchases, sales }) => {
                   <th className="px-8 py-4">Credit</th>
                   <th className="px-8 py-4">Customer / Project</th>
                   <th className="px-8 py-4">Date</th>
+                  <th className="px-8 py-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -317,6 +405,14 @@ const Reports = ({ purchases, sales }) => {
                     </td>
                     <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.customer}</td>
                     <td className="px-8 py-5 text-slate-500 dark:text-slate-500 text-sm whitespace-nowrap">{s.date}</td>
+                    <td className="px-8 py-5 text-center">
+                       <button
+                         onClick={() => generateInvoice(s)}
+                         className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg transition-all" title="Print Invoice"
+                       >
+                         <Printer className="w-4 h-4" />
+                       </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
