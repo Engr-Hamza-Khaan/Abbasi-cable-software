@@ -22,6 +22,7 @@ const TransactionTable = ({ transactions, onDelete }) => {
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Transaction</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cash</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Online</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Credit</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Source</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</th>
@@ -39,7 +40,15 @@ const TransactionTable = ({ transactions, onDelete }) => {
               </td>
               <td className="px-6 py-4">
                 <div>
-                  <p className="text-sm font-bold text-slate-800 dark:text-white">{tx.description}</p>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-bold text-slate-800 dark:text-white leading-tight">{tx.description}</p>
+                    {tx.color && (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-500 uppercase border border-slate-200 dark:border-slate-700 w-fit">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tx.color.toLowerCase() }}></span>
+                        {tx.color}
+                      </span>
+                    )}
+                  </div>
                   {tx.referenceId && (
                     <div className="flex items-center space-x-1 mt-1 text-[10px] text-blue-500 font-bold uppercase tracking-wider">
                       <LinkIcon className="w-3 h-3" />
@@ -49,9 +58,19 @@ const TransactionTable = ({ transactions, onDelete }) => {
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
-                  Rs. {Number(tx.cashAmount !== undefined ? tx.cashAmount : tx.amount).toLocaleString()}
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                  Rs. {Number(tx.cashAmount || 0).toLocaleString()}
                 </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                    Rs. {Number(tx.onlineAmount || 0).toLocaleString()}
+                  </span>
+                  {tx.paymentDetail && (
+                    <span className="text-[9px] text-slate-400 font-bold uppercase">TID: {tx.paymentDetail}</span>
+                  )}
+                </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`text-sm font-bold ${tx.creditAmount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>

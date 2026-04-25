@@ -7,15 +7,19 @@ const ProductManagement = ({ products, setProducts }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedBatchProduct, setSelectedBatchProduct] = useState(null);
+  const [filterColor, setFilterColor] = useState('All');
   const [formData, setFormData] = useState({
     name: '',
     unit: 'meter',
     minStock: '',
+    color: 'Red',
   });
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesColor = filterColor === 'All' || p.color === filterColor;
+    return matchesSearch && matchesColor;
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -31,7 +35,7 @@ const ProductManagement = ({ products, setProducts }) => {
     }
     setShowModal(false);
     setEditingProduct(null);
-    setFormData({ name: '', unit: 'meter', minStock: '' });
+    setFormData({ name: '', unit: 'meter', minStock: '', color: 'Red' });
   };
 
   const editProduct = (e, product) => {
@@ -40,7 +44,8 @@ const ProductManagement = ({ products, setProducts }) => {
     setFormData({
       name: product.name,
       unit: product.unit,
-      minStock: product.minStock
+      minStock: product.minStock,
+      color: product.color || 'Red'
     });
     setShowModal(true);
   };
@@ -175,7 +180,7 @@ const ProductManagement = ({ products, setProducts }) => {
             />
           </label>
           <button
-            onClick={() => { setShowModal(true); setEditingProduct(null); setFormData({ name: '', unit: 'meter', minStock: '' }); }}
+            onClick={() => { setShowModal(true); setEditingProduct(null); setFormData({ name: '', unit: 'meter', minStock: '', color: 'Red' }); }}
             className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-all shadow-lg"
           >
             <Plus className="w-5 h-5" />
@@ -185,15 +190,34 @@ const ProductManagement = ({ products, setProducts }) => {
       </div>
 
       {/* Search and Filters */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-        <input
-          type="text"
-          placeholder="Search products..."
-          className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2">
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">Color:</span>
+          <select 
+            className="bg-transparent border-none outline-none text-sm font-bold text-slate-700 dark:text-white cursor-pointer"
+            value={filterColor}
+            onChange={(e) => setFilterColor(e.target.value)}
+          >
+            <option value="All">All Colors</option>
+            <option value="Red">Red</option>
+            <option value="Black">Black</option>
+            <option value="Blue">Blue</option>
+            <option value="Yellow">Yellow</option>
+            <option value="Green">Green</option>
+            <option value="White">White</option>
+            <option value="Grey">Grey</option>
+          </select>
+        </div>
       </div>
 
       {/* Product Grid */}
@@ -218,7 +242,15 @@ const ProductManagement = ({ products, setProducts }) => {
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">{product.name}</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-white">{product.name}</h3>
+              {product.color && (
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: product.color.toLowerCase() }}></span>
+                  {product.color}
+                </span>
+              )}
+            </div>
 
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
@@ -276,7 +308,23 @@ const ProductManagement = ({ products, setProducts }) => {
                   <option value="feet">Feet (ft)</option>
                 </select>
               </div>
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Color</label>
+                  <select
+                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  >
+                    <option value="Red">Red</option>
+                    <option value="Black">Black</option>
+                    <option value="Blue">Blue</option>
+                    <option value="Yellow">Yellow</option>
+                    <option value="Green">Green</option>
+                    <option value="White">White</option>
+                    <option value="Grey">Grey</option>
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Min. Stock Level</label>
                   <input
@@ -332,6 +380,7 @@ const ProductManagement = ({ products, setProducts }) => {
                   <thead>
                     <tr className="text-sm font-semibold text-slate-500 border-b border-slate-100 dark:border-slate-700">
                       <th className="pb-3 px-2">Batch Label</th>
+                      <th className="pb-3 px-2">Specs</th>
                       <th className="pb-3 px-2">Added Date</th>
                       <th className="pb-3 px-2">Status</th>
                       <th className="pb-3 px-2">Qty Available</th>
@@ -347,6 +396,14 @@ const ProductManagement = ({ products, setProducts }) => {
                         return (
                           <tr key={v.id} className="text-sm hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                             <td className="py-4 px-2 font-medium text-slate-800 dark:text-slate-200">{v.label}</td>
+                            <td className="py-4 px-2">
+                              <div className="flex flex-col gap-1">
+                                {v.size && <span className="text-[10px] text-slate-500 font-medium">Size: {v.size}mm</span>}
+                                {v.type && <span className="text-[10px] text-slate-500 font-medium">Type: {v.type}</span>}
+                                {v.core && <span className="text-[10px] text-slate-500 font-medium">Core: {v.core}</span>}
+                                {!v.size && !v.type && !v.core && <span className="text-[10px] text-slate-400">---</span>}
+                              </div>
+                            </td>
                             <td className="py-4 px-2 text-slate-500">{v.date || '---'}</td>
                             <td className="py-4 px-2">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isNew

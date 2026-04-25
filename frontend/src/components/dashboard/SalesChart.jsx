@@ -7,13 +7,27 @@ import {
 } from 'recharts'
 
 
-function SalesChart() {
+function SalesChart({ transactions = [] }) {
+    const totals = transactions.reduce((acc, tx) => {
+        acc.cash += Number(tx.cashAmount) || 0;
+        acc.online += Number(tx.onlineAmount) || 0;
+        acc.credit += Number(tx.creditAmount) || 0;
+        return acc;
+    }, { cash: 0, online: 0, credit: 0 });
+
+    const totalAll = totals.cash + totals.online + totals.credit;
+    
     const data = [
-        { name: "Credit", value: 45, color: '#3b82f6' },
-        { name: "Cash", value: 30, color: '#8b5cf6' },
-        { name: "Bank Transfer", value: 15, color: '#10b981' },
-        { name: "Other", value: 10, color: '#f59e0b' },
-    ];
+        { name: "Credit", value: totalAll > 0 ? Math.round((totals.credit / totalAll) * 100) : 0, color: '#3b82f6' },
+        { name: "Cash", value: totalAll > 0 ? Math.round((totals.cash / totalAll) * 100) : 0, color: '#8b5cf6' },
+        { name: "Bank Transfer", value: totalAll > 0 ? Math.round((totals.online / totalAll) * 100) : 0, color: '#10b981' },
+        { name: "Other", value: 0, color: '#f59e0b' },
+    ].filter(item => item.value > 0 || item.name === "Cash"); // Keep Cash even if 0 to show something if empty
+
+    // If everything is 0, show a default slice
+    const chartData = data.reduce((sum, item) => sum + item.value, 0) === 0 
+        ? [{ name: "No Data", value: 100, color: '#cbd5e1' }] 
+        : data;
 
     return (
         <div className='bg-white dark:bg-slate-900 backdrop-blur-xl rounded-b-2xl p-6 border
@@ -53,7 +67,7 @@ function SalesChart() {
                         </defs>
 
                         <Pie
-                            data={data}
+                            data={chartData}
                             dataKey="value"
                             nameKey="name"
                             innerRadius={40}
@@ -61,17 +75,18 @@ function SalesChart() {
                             paddingAngle={5}
                             cornerRadius={5}
                         >
-                            {data.map((entry, index) => {
+                            {chartData.map((entry, index) => {
                                 const gradientMap = {
                                     "Credit": "creditGradient",
                                     "Cash": "cashGradient",
                                     "Bank Transfer": "bankTransferGradient",
-                                    "Other": "otherGradient"
+                                    "Other": "otherGradient",
+                                    "No Data": "otherGradient"
                                 };
                                 return (
                                     <Cell
                                         key={`cell-${index}`}
-                                        fill={`url(#${gradientMap[entry.name]})`}
+                                        fill={entry.name === "No Data" ? "#cbd5e1" : `url(#${gradientMap[entry.name]})`}
                                     />
                                 );
                             })}
@@ -89,8 +104,8 @@ function SalesChart() {
                 </ResponsiveContainer>
             </div>
             <div className="space-y-3">
-                {data.map((item, index) => {
-                    return <div className='flex items-center justify-between'>
+                {chartData.map((item, index) => {
+                    return <div key={index} className='flex items-center justify-between'>
                         <div className='flex items-center space-x-3'>
                             <div
                               className='w-3 h-3 rounded-full'

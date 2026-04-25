@@ -9,21 +9,35 @@ import {
 
 } from 'recharts'
 
-function RevenueChart() {
-  const data = [
+function RevenueChart({ transactions = [] }) {
+  // Aggregate data by month
+  const monthlyData = transactions.reduce((acc, tx) => {
+    const date = new Date(tx.date);
+    const month = date.toLocaleString('default', { month: 'short' });
+    const year = date.getFullYear();
+    const key = `${month} ${year}`;
+    
+    if (!acc[key]) {
+      acc[key] = { month: key, Revenue: 0, Expenses: 0, sortKey: new Date(year, date.getMonth(), 1).getTime() };
+    }
+    
+    if (tx.type === 'income') {
+      acc[key].Revenue += Number(tx.amount) || 0;
+    } else if (tx.type === 'expense') {
+      acc[key].Expenses += Number(tx.amount) || 0;
+    }
+    
+    return acc;
+  }, {});
 
-    { month: "Jan", Revenue: 45000, Expenses: 32000 },
-    { month: "Feb", Revenue: 52000, Expenses: 38000 },
-    { month: "Mar", Revenue: 48000, Expenses: 35000 },
-    { month: "Apr", Revenue: 61000, Expenses: 42000 },
-    { month: "May", Revenue: 55000, Expenses: 40000 },
-    { month: "Jun", Revenue: 67000, Expenses: 45000 },
-    { month: "Jul", Revenue: 72000, Expenses: 48000 },
-    { month: "Aug", Revenue: 69000, Expenses: 46000 },
-    { month: "Sep", Revenue: 78000, Expenses: 52000 },
-    { month: "Oct", Revenue: 74000, Expenses: 50000 },
-    { month: "Nov", Revenue: 82000, Expenses: 55000 },
-    { month: "Dec", Revenue: 89000, Expenses: 58000 },
+  // Convert to array and sort by date
+  const data = Object.values(monthlyData)
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .slice(-12); // Show last 12 months
+
+  // Fallback if no data
+  const chartData = data.length > 0 ? data : [
+    { month: new Date().toLocaleString('default', { month: 'short' }), Revenue: 0, Expenses: 0 }
   ];
 
   
@@ -59,7 +73,7 @@ function RevenueChart() {
         {" "}
         <ResponsiveContainer width='100%' heigth='100%'>
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 20, right: 30, left: 30, bottom: 5 }}
           >
             <CartesianGrid

@@ -64,12 +64,18 @@ const AppContent = () => {
     return item ? JSON.parse(item) : [];
   });
 
+  const [expenses, setExpenses] = useState(() => {
+    const item = window.localStorage.getItem('inventory-expenses');
+    return item ? JSON.parse(item) : [];
+  });
+
   useEffect(() => {
     window.localStorage.setItem('inventory-products', JSON.stringify(products));
     window.localStorage.setItem('inventory-purchases', JSON.stringify(purchases));
     window.localStorage.setItem('inventory-sales', JSON.stringify(sales));
     window.localStorage.setItem('cashTransactions', JSON.stringify(cashTransactions));
-  }, [products, purchases, sales, cashTransactions]);
+    window.localStorage.setItem('inventory-expenses', JSON.stringify(expenses));
+  }, [products, purchases, sales, cashTransactions, expenses]);
 
   useEffect(() => {
     if (theme === "dark") document.documentElement.classList.add("dark");
@@ -131,7 +137,7 @@ const AppContent = () => {
                 
                 {/* Protected Routes */}
                 <Route element={<PrivateRoute allowedRoles={['admin', 'user']} />}>
-                  <Route path="/dashboard" element={user.role === 'admin' ? <Dashboard products={productsWithTotalStock} sales={sales} purchases={purchases} /> : <Navigate to="/inventory" />} />
+                                    <Route path="/dashboard" element={user.role === 'admin' ? <Dashboard products={productsWithTotalStock} sales={sales} purchases={purchases} transactions={cashTransactions} expenses={expenses} /> : <Navigate to="/inventory" />} />
                   <Route path="/inventory" element={
                     <InventoryWrapper 
                       products={productsWithTotalStock} 
@@ -140,15 +146,16 @@ const AppContent = () => {
                       setPurchases={setPurchases} 
                       sales={sales} 
                       setSales={setSales} 
+                      setCashTransactions={setCashTransactions}
                     />
                   } />
                   <Route path="/reports" element={<Reports purchases={purchases} sales={sales} />} />
                   <Route path="/attendance" element={<Attendance />} />
                   <Route path="/manufacturing" element={<Manufacturing />} />
-                  <Route path="/zakat" element={<Zakat />} />
-                  <Route path="/expense-home" element={<ExpenseManager type="home" />} />
-                  <Route path="/expense-shop" element={<ExpenseManager type="shop" />} />
-                  <Route path="/expense-transport" element={<ExpenseManager type="transport" />} />
+                  <Route path="/zakat" element={<Zakat products={productsWithTotalStock} />} />
+                  <Route path="/expense-home" element={<ExpenseManager type="home" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
+                  <Route path="/expense-shop" element={<ExpenseManager type="shop" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
+                  <Route path="/expense-transport" element={<ExpenseManager type="transport" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
 

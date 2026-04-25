@@ -1,58 +1,28 @@
 import { Clock, ShoppingCart, CreditCard, AlertTriangle, UserPlus, XCircle } from 'lucide-react'
 
-function ActivityFeed() {
-    const activities = [
-        {
-            id: 1,
-            type: "order",
-            icon: ShoppingCart,
-            title: "New Order Received",
-            description: "You received a new order from John Doe.",
-            time: "2 mins ago",
-            color: "#3b82f6", // blue
-            bgColor: "bg-blue-100 dark:bg-blue-900/30"
-        },
-        {
-            id: 2,
-            type: "payment",
-            icon: CreditCard,
-            title: "Payment Completed",
-            description: "Payment of $250 has been successfully processed.",
-            time: "15 mins ago",
-            color: "#10b981", // green
-            bgColor: "bg-emerald-100 dark:bg-emerald-900/30"
-        },
-        {
-            id: 3,
-            type: "alert",
-            icon: AlertTriangle,
-            title: "Low Stock Alert",
-            description: "Product 'Wireless Mouse' is running low on stock.",
-            time: "30 mins ago",
-            color: "#f59e0b", // amber
-            bgColor: "bg-yellow-100 dark:bg-yellow-900/30"
-        },
-        {
-            id: 4,
-            type: "user",
-            icon: UserPlus,
-            title: "New User Registered",
-            description: "A new user named Sarah joined the platform.",
-            time: "1 hour ago",
-            color: "#8b5cf6", // purple
-            bgColor: "bg-purple-100 dark:bg-purple-900/30"
-        },
-        {
-            id: 5,
-            type: "cancel",
-            icon: XCircle,
-            title: "Order Cancelled",
-            description: "Order #1257 was cancelled by the customer.",
-            time: "2 hours ago",
-            color: "#ef4444", // red
-            bgColor: "bg-red-100 dark:bg-red-900/30"
-        }
-    ];
+function ActivityFeed({ transactions = [] }) {
+    const activities = transactions
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5)
+        .map(tx => ({
+            id: tx.id,
+            type: tx.type === 'income' ? 'order' : 'payment',
+            icon: tx.type === 'income' ? ShoppingCart : CreditCard,
+            title: tx.type === 'income' ? "New Sale Recorded" : "Purchase/Expense Made",
+            description: tx.description,
+            time: tx.date,
+            color: tx.type === 'income' ? "#10b981" : "#3b82f6",
+            bgColor: tx.type === 'income' ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-blue-100 dark:bg-blue-900/30"
+        }));
+
+    if (activities.length === 0) {
+        return (
+            <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6'>
+                <h3 className='text-lg font-bold text-slate-800 dark:text-white mb-2'>Activity Feed</h3>
+                <p className='text-sm text-slate-500'>No recent activities found.</p>
+            </div>
+        );
+    }
 
     return (
         <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border

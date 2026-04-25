@@ -3,18 +3,31 @@ import { DollarSign, ArrowUpCircle, ArrowDownCircle, Wallet, Plus, Filter, Searc
 import TransactionTable from './TransactionTable';
 import AddTransactionModal from './AddTransactionModal';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const CashFlowDashboard = ({ transactions, setTransactions }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const isWithinDateRange = (dateStr) => {
+    if (!startDate && !endDate) return true;
+    if (startDate && dateStr < startDate) return false;
+    if (endDate && dateStr > endDate) return false;
+    return true;
+  };
+
+  const dateFilteredTransactions = transactions.filter(t => isWithinDateRange(t.date));
 
   // Calculations
-  const totalIncome = transactions
+  const totalIncome = dateFilteredTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
-  const totalExpense = transactions
+  const totalExpense = dateFilteredTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
@@ -28,8 +41,10 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
   const todayExpense = todayTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + Number(t.amount), 0);
+  
+  const todayCredit = todayTransactions.reduce((sum, t) => sum + Number(t.creditAmount || 0), 0);
 
-  const filteredTransactions = transactions
+  const filteredTransactions = dateFilteredTransactions
     .filter(t => (filterType === 'all' || t.type === filterType))
     .filter(t => (
       t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,6 +68,38 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'CashFlow');
     XLSX.writeFile(wb, `CashFlow_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const title = 'Cash Flow Transaction Report';
+    
+    doc.text(title, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+
+    const headers = [['Date', 'Type', 'Description', 'Source', 'Cash', 'Online', 'Credit', 'Total']];
+
+    const body = filteredTransactions.map(tx => [
+      tx.date,
+      tx.type.toUpperCase(),
+      tx.description,
+      tx.source,
+      `${(tx.cashAmount !== undefined ? tx.cashAmount : (tx.type === 'income' ? tx.amount : tx.amount))?.toLocaleString() || 0}PKR`,
+      `${tx.onlineAmount?.toLocaleString() || 0}PKR`,
+      `${tx.creditAmount?.toLocaleString() || 0}PKR`,
+      `${tx.amount?.toLocaleString() || 0}PKR`
+    ]);
+
+    autoTable(doc, {
+      head: headers,
+      body: body,
+      startY: 30,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [79, 70, 229] } // Indigo-600
+    });
+
+    doc.save(`CashFlow_Report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const addManualTransaction = (newTx) => {
@@ -151,6 +198,10 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
               <span className="text-slate-400">Out:</span>
               <span className="text-rose-400 font-bold">Rs. {todayExpense.toLocaleString()}</span>
             </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-slate-400">Credit:</span>
+              <span className="text-amber-400 font-bold">Rs. {todayCredit.toLocaleString()}</span>
+            </div>
             <div className="h-px bg-slate-700 my-2"></div>
             <div className="flex justify-between items-center">
               <span className="text-white font-medium">Net:</span>
@@ -183,6 +234,24 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
               />
             </div>
 
+            {/* Date Filters */}
+            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm">
+              <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+              <input 
+                type="date" 
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-transparent border-none outline-none text-[11px] dark:text-white font-bold"
+              />
+              <span className="text-slate-400 text-[10px] font-bold">TO</span>
+              <input 
+                type="date" 
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-transparent border-none outline-none text-[11px] dark:text-white font-bold"
+              />
+            </div>
+
             {/* Filters */}
             <div className="flex items-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1">
               <button 
@@ -205,13 +274,23 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
               </button>
             </div>
 
-            <button 
-              onClick={handleExport}
-              className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-4 py-2 text-sm font-bold transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <div className="flex gap-1 items-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-1">
+              <button 
+                onClick={handleExport}
+                className="flex items-center space-x-1.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-xs font-bold transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Excel</span>
+              </button>
+              <div className="w-px h-4 bg-slate-200 dark:bg-slate-700"></div>
+              <button 
+                onClick={handleExportPDF}
+                className="flex items-center space-x-1.5 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 px-3 py-2 text-xs font-bold transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>PDF</span>
+              </button>
+            </div>
           </div>
         </div>
 

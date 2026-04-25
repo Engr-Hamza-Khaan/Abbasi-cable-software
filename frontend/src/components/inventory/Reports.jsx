@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
 import { Search, Filter, ArrowUpRight, ArrowDownLeft, FileText, Download, Calendar } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Reports = ({ purchases, sales }) => {
   const [activeTab, setActiveTab] = useState('purchases');
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const isWithinDateRange = (dateStr) => {
+    if (!startDate && !endDate) return true;
+    const date = dateStr; // Assuming YYYY-MM-DD
+    if (startDate && date < startDate) return false;
+    if (endDate && date > endDate) return false;
+    return true;
+  };
 
   const handleExport = () => {
     const dataToExport = activeTab === 'purchases' ? purchaseData : salesData;
@@ -17,18 +28,73 @@ const Reports = ({ purchases, sales }) => {
     XLSX.writeFile(wb, fileName);
   };
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+    const dataToExport = activeTab === 'purchases' ? purchaseData : salesData;
+    const title = activeTab === 'purchases' ? 'Purchase History Report' : 'Sales History Report';
+    
+    doc.text(title, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+
+    const headers = activeTab === 'purchases' 
+      ? [['Product', 'Color', 'Specs', 'Length', 'Total', 'Cash', 'Online', 'Vendor', 'Date']]
+      : [['Product', 'Color', 'Specs', 'Length', 'Total', 'Cash', 'Online', 'Customer', 'Date']];
+
+    const body = dataToExport.map(row => {
+      const specs = `${row.size || ''} ${row.type || ''} ${row.core || ''}`.trim() || '-';
+      if (activeTab === 'purchases') {
+        return [
+          row.productName,
+          row.color || '-',
+          specs,
+          row.length,
+          `${row.total?.toLocaleString()}PKR`,
+          `${row.cashAmount?.toLocaleString() || 0}PKR`,
+          `${row.onlineAmount?.toLocaleString() || 0}PKR`,
+          row.vendor,
+          row.date
+        ];
+      } else {
+        return [
+          row.productName,
+          row.color || '-',
+          specs,
+          row.length,
+          `${row.total?.toLocaleString()}PKR`,
+          `${row.cashAmount?.toLocaleString() || 0}PKR`,
+          `${row.onlineAmount?.toLocaleString() || 0}PKR`,
+          row.customer,
+          row.date
+        ];
+      }
+    });
+
+    autoTable(doc, {
+      head: headers,
+      body: body,
+      startY: 30,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [37, 99, 235] } // Blue-600
+    });
+
+    doc.save(`${title.replace(/ /g, '_')}.pdf`);
+  };
+
   const purchaseData = purchases.filter(p =>
-    p.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.vendor.toLowerCase().includes(searchTerm.toLowerCase())
+    (p.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.vendor.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    isWithinDateRange(p.date)
   );
 
   const salesData = sales.filter(s =>
-    s.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.customer.toLowerCase().includes(searchTerm.toLowerCase())
+    (s.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.customer.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    isWithinDateRange(s.date)
   );
 
-  const totalPurchaseValue = purchases.reduce((acc, p) => acc + (p.total || 0), 0);
-  const totalSalesUnits = sales.reduce((acc, s) => acc + (s.quantity || 0), 0);
+  const totalPurchaseValue = purchaseData.reduce((acc, p) => acc + (p.total || 0), 0);
+  const totalSalesLength = salesData.reduce((acc, s) => acc + (s.length || 0), 0);
 
   return (
     <div className="space-y-8">
@@ -49,9 +115,9 @@ const Reports = ({ purchases, sales }) => {
             <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl text-indigo-600 dark:text-indigo-400">
               <ArrowUpRight className="w-6 h-6" />
             </div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Units Issued</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Length Issued</p>
           </div>
-          <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{totalSalesUnits.toLocaleString()}</p>
+          <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{totalSalesLength.toLocaleString()}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md">
@@ -95,6 +161,23 @@ const Reports = ({ purchases, sales }) => {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2 shadow-sm">
+                <Calendar className="w-4 h-4 text-slate-400" />
+                <input 
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent border-none outline-none text-xs dark:text-white"
+                />
+                <span className="text-slate-400 text-xs font-bold">to</span>
+                <input 
+                  type="date" 
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent border-none outline-none text-xs dark:text-white"
+                />
+              </div>
+
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input
@@ -105,13 +188,22 @@ const Reports = ({ purchases, sales }) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <button
-                onClick={handleExport}
-                className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export Excel</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExport}
+                  className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Excel</span>
+                </button>
+                <button
+                  onClick={handleExportPDF}
+                  className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>PDF</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -122,9 +214,13 @@ const Reports = ({ purchases, sales }) => {
               <thead className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                 <tr>
                   <th className="px-8 py-4">Product</th>
-                  <th className="px-8 py-4">Quantity</th>
-                  <th className="px-8 py-4">Unit Price</th>
+                  <th className="px-8 py-4">Color</th>
+                  <th className="px-8 py-4">Specs</th>
+                  <th className="px-8 py-4">Length</th>
                   <th className="px-8 py-4">Total</th>
+                  <th className="px-8 py-4">Cash</th>
+                  <th className="px-8 py-4">Online</th>
+                  <th className="px-8 py-4">Credit</th>
                   <th className="px-8 py-4">Vendor</th>
                   <th className="px-8 py-4">Date</th>
                 </tr>
@@ -132,10 +228,36 @@ const Reports = ({ purchases, sales }) => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {purchaseData.map(p => (
                   <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
-                    <td className="px-8 py-5 font-semibold text-slate-800 dark:text-slate-200">{p.productName}</td>
-                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{p.quantity}</td>
-                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{p.unitPrice?.toLocaleString()}PKR</td>
+                    <td className="px-8 py-5 font-semibold text-slate-800 dark:text-white">{p.productName}</td>
+                    <td className="px-8 py-5">
+                      {p.color && (
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color.toLowerCase() }}></span>
+                          {p.color}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex flex-wrap gap-1">
+                        {p.size && <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded font-medium">{p.size}mm</span>}
+                        {p.type && <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded font-medium">{p.type}</span>}
+                        {p.core && <span className="text-[10px] px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded font-medium">{p.core}</span>}
+                      </div>
+                    </td>
+                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{p.length}</td>
                     <td className="px-8 py-5 font-bold text-slate-800 dark:text-white">{p.total?.toLocaleString()}PKR</td>
+                    <td className="px-8 py-5 text-emerald-600 dark:text-emerald-400 font-medium">{p.cashAmount?.toLocaleString() || 0}PKR</td>
+                    <td className="px-8 py-5 text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex flex-col">
+                        <span>{p.onlineAmount?.toLocaleString() || 0}PKR</span>
+                        {p.paymentDetail && <span className="text-[10px] text-slate-500 truncate max-w-[100px]">TID: {p.paymentDetail}</span>}
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className={`font-bold ${p.credit > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'}`}>
+                        {p.credit?.toLocaleString()}PKR
+                      </span>
+                    </td>
                     <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{p.vendor}</td>
                     <td className="px-8 py-5 text-slate-500 dark:text-slate-500 text-sm whitespace-nowrap">{p.date}</td>
                   </tr>
@@ -147,19 +269,53 @@ const Reports = ({ purchases, sales }) => {
               <thead className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                 <tr>
                   <th className="px-8 py-4">Product</th>
-                  <th className="px-8 py-4">Quantity Issued</th>
-                  <th className="px-8 py-4">Customer / Project</th>
+                  <th className="px-8 py-4">Color</th>
+                  <th className="px-8 py-4">Specs</th>
+                  <th className="px-8 py-4">Length Issued</th>
+                  <th className="px-8 py-4">Price</th>
                   <th className="px-8 py-4">Total Value</th>
+                  <th className="px-8 py-4">Cash</th>
+                  <th className="px-8 py-4">Online</th>
+                  <th className="px-8 py-4">Credit</th>
+                  <th className="px-8 py-4">Customer / Project</th>
                   <th className="px-8 py-4">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {salesData.map(s => (
                   <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
-                    <td className="px-8 py-5 font-semibold text-slate-800 dark:text-slate-200">{s.productName}</td>
-                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.quantity}</td>
-                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.customer}</td>
+                    <td className="px-8 py-5 font-semibold text-slate-800 dark:text-white">{s.productName}</td>
+                    <td className="px-8 py-5">
+                      {s.color && (
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color.toLowerCase() }}></span>
+                          {s.color}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex flex-wrap gap-1">
+                        {s.size && <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded font-medium">{s.size}mm</span>}
+                        {s.type && <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded font-medium">{s.type}</span>}
+                        {s.core && <span className="text-[10px] px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded font-medium">{s.core}</span>}
+                      </div>
+                    </td>
+                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.length}</td>
+                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.price?.toLocaleString()}PKR</td>
                     <td className="px-8 py-5 font-bold text-slate-800 dark:text-white">{s.total?.toLocaleString()}PKR</td>
+                    <td className="px-8 py-5 text-emerald-600 dark:text-emerald-400 font-medium">{s.cashAmount?.toLocaleString() || 0}PKR</td>
+                    <td className="px-8 py-5 text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex flex-col">
+                        <span>{s.onlineAmount?.toLocaleString() || 0}PKR</span>
+                        {s.paymentDetail && <span className="text-[10px] text-slate-500 truncate max-w-[100px]">TID: {s.paymentDetail}</span>}
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className={`font-bold ${s.credit > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'}`}>
+                        {s.credit?.toLocaleString()}PKR
+                      </span>
+                    </td>
+                    <td className="px-8 py-5 text-slate-600 dark:text-slate-400">{s.customer}</td>
                     <td className="px-8 py-5 text-slate-500 dark:text-slate-500 text-sm whitespace-nowrap">{s.date}</td>
                   </tr>
                 ))}

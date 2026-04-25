@@ -5,7 +5,7 @@ import SalesModule from './SalesModule';
 import Reports from './Reports';
 import { Package, ShoppingCart, ShoppingBag, BarChart3 } from 'lucide-react';
 
-const InventoryWrapper = ({ products, setProducts, purchases, setPurchases, sales, setSales }) => {
+const InventoryWrapper = ({ products, setProducts, purchases, setPurchases, sales, setSales, setCashTransactions }) => {
   const [activeSubPage, setActiveSubPage] = useState('products');
 
   const tabs = [
@@ -47,12 +47,14 @@ const InventoryWrapper = ({ products, setProducts, purchases, setPurchases, sale
           <PurchaseModule 
             products={products} setProducts={setProducts} 
             purchases={purchases} setPurchases={setPurchases} 
+            setCashTransactions={setCashTransactions}
           />
         )}
         {activeSubPage === 'sales' && (
           <SalesModule 
             products={products} setProducts={setProducts} 
             sales={sales} setSales={setSales} 
+            setCashTransactions={setCashTransactions}
           />
         )}
         {activeSubPage === 'reports' && (
