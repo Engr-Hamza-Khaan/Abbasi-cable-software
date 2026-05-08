@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, ArrowUpCircle, ArrowDownCircle, Wallet, Plus, Filter, Search, Calendar as CalendarIcon, FileText, Download } from 'lucide-react';
+import { DollarSign, ArrowUpCircle, ArrowDownCircle, Wallet, Plus, Filter, Search, Calendar as CalendarIcon, FileText, Download, ChevronDown, ChevronRight } from 'lucide-react';
 import TransactionTable from './TransactionTable';
 import AddTransactionModal from './AddTransactionModal';
 import * as XLSX from 'xlsx';
@@ -12,6 +12,8 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isIncomeOpen, setIsIncomeOpen] = useState(false);
+  const [isExpenseOpen, setIsExpenseOpen] = useState(false);
 
   const isWithinDateRange = (dateStr) => {
     if (!startDate && !endDate) return true;
@@ -27,9 +29,25 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
+  const totalCashIncome = dateFilteredTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + Number(t.cashAmount !== undefined ? t.cashAmount : (t.amount - (t.onlineAmount || 0))), 0);
+
+  const totalOnlineIncome = dateFilteredTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + Number(t.onlineAmount || 0), 0);
+
   const totalExpense = dateFilteredTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const totalCashExpense = dateFilteredTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Number(t.cashAmount !== undefined ? t.cashAmount : (t.amount - (t.onlineAmount || 0))), 0);
+
+  const totalOnlineExpense = dateFilteredTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Number(t.onlineAmount || 0), 0);
 
   const netBalance = totalIncome - totalExpense;
 
@@ -38,9 +56,26 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
   const todayIncome = todayTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + Number(t.amount), 0);
+  
+  const todayCashIncome = todayTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + Number(t.cashAmount !== undefined ? t.cashAmount : (t.amount - (t.onlineAmount || 0))), 0);
+
+  const todayOnlineIncome = todayTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + Number(t.onlineAmount || 0), 0);
+
   const todayExpense = todayTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const todayCashExpense = todayTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Number(t.cashAmount !== undefined ? t.cashAmount : (t.amount - (t.onlineAmount || 0))), 0);
+
+  const todayOnlineExpense = todayTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Number(t.onlineAmount || 0), 0);
   
   const todayCredit = todayTransactions.reduce((sum, t) => sum + Number(t.creditAmount || 0), 0);
 
@@ -146,6 +181,16 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
           <div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Income</p>
             <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">Rs. {totalIncome.toLocaleString()}</h3>
+            <div className="mt-3 flex flex-col gap-2 text-xs">
+              <div className="flex justify-between items-center px-2.5 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 font-medium">
+                <span>Cash</span>
+                <span>Rs. {totalCashIncome.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center px-2.5 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 font-medium">
+                <span>Online</span>
+                <span>Rs. {totalOnlineIncome.toLocaleString()}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -162,6 +207,16 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
           <div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Expenses</p>
             <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">Rs. {totalExpense.toLocaleString()}</h3>
+            <div className="mt-3 flex flex-col gap-2 text-xs">
+              <div className="flex justify-between items-center px-2.5 py-1.5 rounded-md bg-rose-50 dark:bg-rose-900/20 text-rose-600 font-medium">
+                <span>Cash</span>
+                <span>Rs. {totalCashExpense.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center px-2.5 py-1.5 rounded-md bg-rose-50 dark:bg-rose-900/20 text-rose-600 font-medium">
+                <span>Online</span>
+                <span>Rs. {totalOnlineExpense.toLocaleString()}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -190,13 +245,58 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
             <span className="text-xs font-semibold uppercase tracking-wider">Today's Summary</span>
           </div>
           <div className="space-y-3">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">In:</span>
-              <span className="text-emerald-400 font-bold">Rs. {todayIncome.toLocaleString()}</span>
+            {/* Income Accordion */}
+            <div className="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/50">
+              <button 
+                onClick={() => setIsIncomeOpen(!isIncomeOpen)}
+                className="w-full flex justify-between items-center p-3 text-sm hover:bg-slate-700/50 transition-colors"
+              >
+                <div className="flex items-center space-x-2">
+                  {isIncomeOpen ? <ChevronDown className="w-4 h-4 text-emerald-400" /> : <ChevronRight className="w-4 h-4 text-emerald-400" />}
+                  <span className="text-slate-300">In (Total):</span>
+                </div>
+                <span className="text-emerald-400 font-bold">Rs. {todayIncome.toLocaleString()}</span>
+              </button>
+              
+              {isIncomeOpen && (
+                <div className="p-3 pt-0 space-y-2 bg-slate-800/30">
+                  <div className="flex justify-between items-center text-xs pl-6">
+                    <span className="text-slate-400">Cash:</span>
+                    <span className="text-emerald-500/80 font-semibold">Rs. {todayCashIncome.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs pl-6">
+                    <span className="text-slate-400">Online:</span>
+                    <span className="text-emerald-500/80 font-semibold">Rs. {todayOnlineIncome.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">Out:</span>
-              <span className="text-rose-400 font-bold">Rs. {todayExpense.toLocaleString()}</span>
+
+            {/* Expense Accordion */}
+            <div className="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/50">
+              <button 
+                onClick={() => setIsExpenseOpen(!isExpenseOpen)}
+                className="w-full flex justify-between items-center p-3 text-sm hover:bg-slate-700/50 transition-colors"
+              >
+                <div className="flex items-center space-x-2">
+                  {isExpenseOpen ? <ChevronDown className="w-4 h-4 text-rose-400" /> : <ChevronRight className="w-4 h-4 text-rose-400" />}
+                  <span className="text-slate-300">Out (Total):</span>
+                </div>
+                <span className="text-rose-400 font-bold">Rs. {todayExpense.toLocaleString()}</span>
+              </button>
+              
+              {isExpenseOpen && (
+                <div className="p-3 pt-0 space-y-2 bg-slate-800/30">
+                  <div className="flex justify-between items-center text-xs pl-6">
+                    <span className="text-slate-400">Cash:</span>
+                    <span className="text-rose-400/80 font-semibold">Rs. {todayCashExpense.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs pl-6">
+                    <span className="text-slate-400">Online:</span>
+                    <span className="text-rose-400/80 font-semibold">Rs. {todayOnlineExpense.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">Credit:</span>

@@ -15,7 +15,8 @@ import {
   Settings,
   ShoppingBag,
   Users,
-  Zap
+  Zap,
+  Truck
 } from 'lucide-react'
 
 import profileImage from '../../assets/profilePic.jpg'
@@ -24,6 +25,8 @@ const adminMenuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: "Dashboard", badge: "New" },
   { id: 'inventory', icon: Package, label: "Inventory" },
   { id: 'cash-flow', icon: CreditCard, label: "Cash Flow" },
+  { id: 'ledger', icon: FileText, label: "Ledger" },
+  { id: 'bulty', icon: Truck, label: "Bulty" },
   { id: 'attendance', icon: Calendar, label: "Attendance" },
   { id: 'manufacturing', icon: Zap, label: "Manufacturing" },
   { id: 'zakat', icon: DollarSignIcon, label: "Zakat" },

@@ -19,6 +19,8 @@ import Settings from './components/settings/Settings';
 import Manufacturing from './components/manufacturing/Manufacturing';
 import Zakat from './components/zakat/Zakat';
 import ExpenseManager from './components/expense/ExpenseManager';
+import Ledger from './components/ledger/Ledger';
+import Bulty from './components/bulty/Bulty';
 
 const AppContent = () => {
   const { user, logout } = useAuth();
@@ -162,6 +164,8 @@ const AppContent = () => {
                 {/* Admin Only Routes */}
                 <Route element={<PrivateRoute allowedRoles={['admin']} />}>
                   <Route path="/cash-flow" element={<CashFlowDashboard transactions={cashTransactions} setTransactions={setCashTransactions} />} />
+                  <Route path="/ledger" element={<Ledger sales={sales} transactions={cashTransactions} />} />
+                  <Route path="/bulty" element={<Bulty />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
