@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (name, username, email, password, role) => {
+  const signup = async (name, username, email, password, role, shopId) => {
     try {
       const response = await axios.post('http://localhost:5000/api/auth/register', {
         name,
@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
         role,
+        shopId
       });
       return { success: true, message: response.data.message };
     } catch (error) {

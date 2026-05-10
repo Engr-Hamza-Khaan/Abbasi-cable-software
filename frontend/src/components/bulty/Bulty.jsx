@@ -4,11 +4,16 @@ import {
   Trash2, Edit2, Calendar, Hash, User, 
   FileText, CreditCard, Calculator, MoreVertical
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { logActivity } from '../../utils/logger';
 
 const Bulty = () => {
-  const [showModal, setShowModal] = useState(false);
+  const { user } = useAuth();
+  const shopId = user?.shopId || 'default';
+  const storageKey = `bulty-records-${shopId}`;
+
   const [bulties, setBulties] = useState(() => {
-    const saved = localStorage.getItem('bulty-records');
+    const saved = localStorage.getItem(storageKey);
     return saved ? JSON.parse(saved) : [];
   });
   
@@ -31,11 +36,12 @@ const Bulty = () => {
 
   const [editId, setEditId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
 
   // Persist to localStorage
   useEffect(() => {
-    localStorage.setItem('bulty-records', JSON.stringify(bulties));
-  }, [bulties]);
+    localStorage.setItem(storageKey, JSON.stringify(bulties));
+  }, [bulties, storageKey]);
 
   // Calculations
   const calculateTotal = (weight, rate) => (parseFloat(weight) || 0) * (parseFloat(rate) || 0);
@@ -84,8 +90,10 @@ const Bulty = () => {
 
     if (editId) {
       setBulties(bulties.map(b => b.id === editId ? newRecord : b));
+      logActivity('UPDATE', 'Bulty', editId, { bultyNo: formData.bultyNo, agencyName: formData.agencyName });
     } else {
       setBulties([newRecord, ...bulties]);
+      logActivity('CREATE', 'Bulty', newRecord.id, { bultyNo: formData.bultyNo, agencyName: formData.agencyName });
     }
 
     resetForm();
@@ -120,18 +128,20 @@ const Bulty = () => {
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this bulty record?')) {
+      const recordToDelete = bulties.find(b => b.id === id);
       setBulties(bulties.filter(b => b.id !== id));
+      logActivity('DELETE', 'Bulty', id, { bultyNo: recordToDelete?.bultyNo });
     }
   };
 
   const filteredBulties = bulties.filter(b => 
-    b.agencyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.bultyNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.sender.toLowerCase().includes(searchTerm.toLowerCase())
+    (b.agencyName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (b.bultyNo?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (b.sender?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
-  const totalInTotal = bulties.reduce((sum, b) => sum + b.inTotal, 0);
-  const totalBalance = bulties.reduce((sum, b) => sum + b.balance, 0);
+  const totalInTotal = bulties.reduce((sum, b) => sum + (parseFloat(b.inTotal) || 0), 0);
+  const totalBalance = bulties.reduce((sum, b) => sum + (parseFloat(b.balance) || 0), 0);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -167,11 +177,11 @@ const Bulty = () => {
         </div>
         <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total In-Total</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">Rs. {totalInTotal.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">Rs. {(totalInTotal || 0).toLocaleString()}</p>
         </div>
         <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Balance</p>
-          <p className="text-2xl font-bold text-red-600 mt-1">Rs. {totalBalance.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-red-600 mt-1">Rs. {(totalBalance || 0).toLocaleString()}</p>
         </div>
       </div>
 
@@ -226,14 +236,14 @@ const Bulty = () => {
                       <div className="text-xs text-slate-500 dark:text-slate-400">@ {b.weightRate}</div>
                     </td>
                     <td className="px-4 py-4 text-right">
-                      <div className="text-sm font-bold text-slate-800 dark:text-white">Rs. {b.inTotal.toLocaleString()}</div>
+                      <div className="text-sm font-bold text-slate-800 dark:text-white">Rs. {(b.inTotal || 0).toLocaleString()}</div>
                     </td>
                     <td className="px-4 py-4 text-right">
-                      <div className="text-sm font-medium text-green-600">Rs. {b.payment.toLocaleString()}</div>
+                      <div className="text-sm font-medium text-green-600">Rs. {(b.payment || 0).toLocaleString()}</div>
                     </td>
                     <td className="px-4 py-4 text-right">
                       <div className={`text-sm font-bold ${b.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        Rs. {b.balance.toLocaleString()}
+                        Rs. {(b.balance || 0).toLocaleString()}
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center">
@@ -381,15 +391,15 @@ const Bulty = () => {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between text-slate-600 dark:text-slate-400">
                         <span>Base Total (W x R):</span>
-                        <span>Rs. {calculateTotal(formData.weight, formData.weightRate).toLocaleString()}</span>
+                        <span>Rs. {(calculateTotal(formData.weight, formData.weightRate) || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between font-bold text-slate-800 dark:text-white text-base pt-2 border-t border-blue-200 dark:border-blue-800">
                         <span>IN-TOTAL:</span>
-                        <span>Rs. {calculateInTotal(formData.weight, formData.weightRate, formData.mazduri, formData.lifterCharges, formData.localRent, formData.nakadKharcha).toLocaleString()}</span>
+                        <span>Rs. {(calculateInTotal(formData.weight, formData.weightRate, formData.mazduri, formData.lifterCharges, formData.localRent, formData.nakadKharcha) || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between font-bold text-red-600">
                         <span>BALANCE:</span>
-                        <span>Rs. {calculateBalance(calculateInTotal(formData.weight, formData.weightRate, formData.mazduri, formData.lifterCharges, formData.localRent, formData.nakadKharcha), formData.payment).toLocaleString()}</span>
+                        <span>Rs. {(calculateBalance(calculateInTotal(formData.weight, formData.weightRate, formData.mazduri, formData.lifterCharges, formData.localRent, formData.nakadKharcha), formData.payment) || 0).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>

@@ -59,6 +59,14 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('admin', 'user'),
     defaultValue: 'user',
   },
+  shopId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'Shops',
+      key: 'id',
+    },
+  },
   resetPasswordToken: {
     type: DataTypes.STRING,
   },

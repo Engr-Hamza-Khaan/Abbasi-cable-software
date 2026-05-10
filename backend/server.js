@@ -3,6 +3,9 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const sequelize = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const shopRoutes = require('./routes/shopRoutes');
+const logRoutes = require('./routes/logRoutes');
+const auditLogger = require('./middleware/auditMiddleware');
 
 dotenv.config();
 
@@ -11,9 +14,12 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(auditLogger);
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/shops', shopRoutes);
+app.use('/api/logs', logRoutes);
 
 // Database connection
 sequelize
