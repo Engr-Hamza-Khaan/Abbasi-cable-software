@@ -166,7 +166,7 @@ const Reports = ({ purchases, sales }) => {
     doc.setTextColor(100, 116, 139);
     doc.setFontSize(8);
     doc.setFont(undefined, 'italic');
-    doc.text("Note: Goods once sold will not be returned or exchanged after use.", 15, 270);
+    // doc.text("Note: Goods once sold will not be returned or exchanged after use.", 15, 270);
     doc.text("Thank you for your business!", pageWidth / 2, 280, { align: 'center' });
     
     doc.save(`Invoice_${sale.customer?.replace(/ /g, '_') || 'Customer'}_${sale.date}.pdf`);

@@ -119,10 +119,11 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
     doc.setTextColor(100, 116, 139);
     doc.setFontSize(8);
     doc.setFont(undefined, 'italic');
-    doc.text("Note: Goods once sold will not be returned or exchanged after use.", 15, pageWidth > 250 ? 180 : 270);
+    // doc.text("Note: Goods once sold will not be returned or exchanged after use.", 15, pageWidth > 250 ? 180 : 270);
     doc.text("Thank you for your business!", pageWidth / 2, pageWidth > 250 ? 190 : 280, { align: 'center' });
     
-    doc.save(`Invoice_${sale.customer.replace(/ /g, '_')}_${sale.date}.pdf`);
+    doc.autoPrint();
+    window.open(doc.output('bloburl'), '_blank');
   };
 
   const generateThermalInvoice = (sale) => {
@@ -218,7 +219,8 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
     doc.text("Goods once sold will not be returned.", pageWidth / 2, currentY, { align: 'center' });
     doc.text("Thank you for your business!", pageWidth / 2, currentY + 4, { align: 'center' });
     
-    doc.save(`Receipt_${sale.customer.replace(/ /g, '_')}_${sale.date}.pdf`);
+    doc.autoPrint();
+    window.open(doc.output('bloburl'), '_blank');
   };
 
   const selectedProduct = products.find(p => p.id === parseInt(formData.productId));
