@@ -66,12 +66,16 @@ exports.updateCustomer = async (req, res) => {
 exports.sendManualSms = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`[Backend Debug] Controller received request to send SMS for ID: ${id}`);
+    
     const customer = await CustomerDue.findByPk(id);
     
     if (!customer) {
+      console.log(`[Backend Debug] Customer ID ${id} not found in DB.`);
       return res.status(404).json({ success: false, error: 'Customer not found' });
     }
 
+    console.log(`[Backend Debug] Calling sendSms utility for customer: ${customer.customerName} (${customer.phoneNumber})`);
     const result = await sendSms(
       customer.customerName,
       customer.phoneNumber,
@@ -79,14 +83,19 @@ exports.sendManualSms = async (req, res) => {
       customer.dueDate
     );
 
+    console.log(`[Backend Debug] sendSms utility finished executing. Result:`, result);
+
     if (result.success) {
       customer.reminderSent = true;
       await customer.save();
-      res.status(200).json({ success: true, message: 'SMS sent successfully' });
+      console.log(`[Backend Debug] DB updated: reminderSent = true for Customer ID: ${id}`);
+      res.status(200).json({ success: true, message: 'SMS sent successfully', details: result });
     } else {
+      console.log(`[Backend Debug] sendSms utility reported failure for Customer ID: ${id}`);
       res.status(500).json({ success: false, error: result.error });
     }
   } catch (error) {
+    console.error(`[Backend Debug] Catch Block Error in sendManualSms:`, error);
     res.status(500).json({ success: false, error: error.message });
   }
 };

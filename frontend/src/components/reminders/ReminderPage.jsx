@@ -103,14 +103,18 @@ const ReminderPage = () => {
 
   const handleSendSms = async (id) => {
     setSendingSmsId(id);
+    console.log(`[Frontend Debug] Attempting to send SMS for Customer ID: ${id}`);
+    console.log(`[Frontend Debug] Request URL: ${API_URL}/${id}/send-sms`);
     try {
       const response = await axios.post(`${API_URL}/${id}/send-sms`);
+      console.log(`[Frontend Debug] Success API Response:`, response.data);
       if (response.data.success) {
         setSuccess('SMS sent successfully!');
         fetchDues();
         setTimeout(() => setSuccess(''), 3000);
       }
     } catch (err) {
+      console.error(`[Frontend Debug] API Error Response:`, err.response?.data || err.message);
       setError(err.response?.data?.error || 'Failed to send SMS');
       setTimeout(() => setError(''), 3000);
     }
