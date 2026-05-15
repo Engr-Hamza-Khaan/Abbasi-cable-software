@@ -125,6 +125,102 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
     doc.save(`Invoice_${sale.customer.replace(/ /g, '_')}_${sale.date}.pdf`);
   };
 
+  const generateThermalInvoice = (sale) => {
+    // Standard thermal printer 80mm width
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [80, 150]
+    });
+    
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(0, 0, 0); 
+    doc.text("ABBASI CABLE", pageWidth / 2, 10, { align: 'center' });
+    
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text("Electric Cables & Wires", pageWidth / 2, 14, { align: 'center' });
+    doc.text("Contact: +92 XXX XXXXXXX", pageWidth / 2, 18, { align: 'center' });
+    
+    // Divider
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
+    doc.line(5, 21, pageWidth - 5, 21);
+    
+    // Receipt Info
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text("SALES RECEIPT", pageWidth / 2, 27, { align: 'center' });
+    
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Inv #: INV-${sale.id.toString().slice(-6)}`, 5, 33);
+    doc.text(`Date: ${sale.date}`, 5, 37);
+    doc.text(`Customer: ${sale.customer || "Walk-in"}`, 5, 41);
+    if (sale.contact) {
+      doc.text(`Contact: ${sale.contact}`, 5, 45);
+    }
+    
+    // Divider
+    doc.setDrawColor(150, 150, 150);
+    doc.setLineWidth(0.3);
+    doc.line(5, 48, pageWidth - 5, 48);
+    
+    // Items Header
+    doc.setFont(undefined, 'bold');
+    doc.text("Item", 5, 53);
+    doc.text("Qty", 48, 53);
+    doc.text("Total", 60, 53);
+    doc.line(5, 55, pageWidth - 5, 55);
+    
+    // Items Body
+    doc.setFont(undefined, 'normal');
+    const itemDesc = `${sale.productName} (${sale.size || ''} ${sale.type || ''} ${sale.core || ''})`.trim();
+    const splitDesc = doc.splitTextToSize(itemDesc, 40);
+    doc.text(splitDesc, 5, 60);
+    doc.text(`${sale.length}`, 48, 60);
+    doc.text(`${sale.total.toLocaleString()}`, 60, 60);
+    
+    let currentY = 60 + (splitDesc.length * 4);
+    
+    // Divider
+    doc.line(5, currentY, pageWidth - 5, currentY);
+    currentY += 5;
+    
+    // Totals
+    doc.text("Total:", 35, currentY);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Rs. ${sale.total.toLocaleString()}`, 55, currentY);
+    currentY += 5;
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`Paid (${sale.paymentType}):`, 22, currentY);
+    doc.text(`Rs. ${sale.paidAmount.toLocaleString()}`, 55, currentY);
+    currentY += 5;
+    
+    if (sale.credit > 0) {
+      doc.text("Balance:", 32, currentY);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Rs. ${sale.credit.toLocaleString()}`, 55, currentY);
+    } else {
+      doc.setFont(undefined, 'bold');
+      doc.text("Status: FULLY PAID", pageWidth / 2, currentY, { align: 'center' });
+    }
+    currentY += 10;
+    
+    // Footer
+    doc.setFontSize(7);
+    doc.setFont(undefined, 'normal');
+    doc.text("Goods once sold will not be returned.", pageWidth / 2, currentY, { align: 'center' });
+    doc.text("Thank you for your business!", pageWidth / 2, currentY + 4, { align: 'center' });
+    
+    doc.save(`Receipt_${sale.customer.replace(/ /g, '_')}_${sale.date}.pdf`);
+  };
+
   const selectedProduct = products.find(p => p.id === parseInt(formData.productId));
 
   const handleSubmit = (e) => {
@@ -255,13 +351,24 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
                {message}
             </div>
             {lastSale && (
-              <button 
-                onClick={() => generateInvoice(lastSale)}
-                className="flex items-center justify-center space-x-2 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-bold shadow-sm"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print Invoice</span>
-              </button>
+              <div className="flex flex-wrap gap-3 mt-2">
+                <button 
+                  type="button"
+                  onClick={() => generateInvoice(lastSale)}
+                  className="flex items-center justify-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-bold shadow-sm"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  <span>Print A4 Invoice</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => generateThermalInvoice(lastSale)}
+                  className="flex items-center justify-center px-4 py-2.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg transition-all font-bold shadow-sm"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  <span>Print Thermal Receipt (80mm)</span>
+                </button>
+              </div>
             )}
           </div>
         )}
