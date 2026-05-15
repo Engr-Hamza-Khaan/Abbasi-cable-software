@@ -21,6 +21,7 @@ import Zakat from './components/zakat/Zakat';
 import ExpenseManager from './components/expense/ExpenseManager';
 import Ledger from './components/ledger/Ledger';
 import Bulty from './components/bulty/Bulty';
+import ReminderPage from './components/reminders/ReminderPage';
 
 const AppContent = () => {
   const { user, logout } = useAuth();
@@ -165,6 +166,7 @@ const AppContent = () => {
                 <Route element={<PrivateRoute allowedRoles={['admin']} />}>
                   <Route path="/cash-flow" element={<CashFlowDashboard transactions={cashTransactions} setTransactions={setCashTransactions} />} />
                   <Route path="/ledger" element={<Ledger sales={sales} transactions={cashTransactions} />} />
+                  <Route path="/reminders" element={<ReminderPage />} />
                   <Route path="/bulty" element={<Bulty />} />
                 </Route>
 

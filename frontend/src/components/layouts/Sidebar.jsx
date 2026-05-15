@@ -26,6 +26,7 @@ const adminMenuItems = [
   { id: 'inventory', icon: Package, label: "Inventory" },
   { id: 'cash-flow', icon: CreditCard, label: "Cash Flow" },
   { id: 'ledger', icon: FileText, label: "Ledger" },
+  { id: 'reminders', icon: MessageSquare, label: "Reminders" },
   { id: 'bulty', icon: Truck, label: "Bulty" },
   { id: 'attendance', icon: Calendar, label: "Attendance" },
   { id: 'manufacturing', icon: Zap, label: "Manufacturing" },

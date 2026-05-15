@@ -3,7 +3,9 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const sequelize = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const reminderRoutes = require('./routes/reminderRoutes');
 
+require('./cron/reminderCron'); // Start cron jobs
 dotenv.config();
 
 const app = express();
@@ -14,6 +16,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/reminders', reminderRoutes);
 
 // Database connection
 sequelize
