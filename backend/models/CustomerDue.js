@@ -30,7 +30,15 @@ const CustomerDue = sequelize.define('CustomerDue', {
   reminderSent: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
-  }
+  },
+  shopId: {
+    type: DataTypes.UUID,
+    allowNull: true, // Should be false in production once all data is migrated
+    references: {
+      model: 'Shops',
+      key: 'id',
+    },
+  },
 });
 
 module.exports = CustomerDue;

@@ -21,7 +21,15 @@ const SmsLog = sequelize.define('SmsLog', {
   },
   errorLog: {
     type: DataTypes.TEXT,
-  }
+  },
+  shopId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'Shops',
+      key: 'id',
+    },
+  },
 });
 
 module.exports = SmsLog;

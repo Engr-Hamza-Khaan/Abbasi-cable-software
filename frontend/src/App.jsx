@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ShopProvider } from './context/ShopContext';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -139,7 +140,7 @@ const AppContent = () => {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 
                 {/* Protected Routes */}
-                <Route element={<PrivateRoute allowedRoles={['admin', 'user']} />}>
+                <Route element={<PrivateRoute allowedRoles={['admin', 'employee']} />}>
                                     <Route path="/dashboard" element={user.role === 'admin' ? <Dashboard products={productsWithTotalStock} sales={sales} purchases={purchases} transactions={cashTransactions} expenses={expenses} /> : <Navigate to="/inventory" />} />
                   <Route path="/inventory" element={
                     <InventoryWrapper 
@@ -202,7 +203,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <ShopProvider>
+          <AppContent />
+        </ShopProvider>
       </AuthProvider>
     </Router>
   );

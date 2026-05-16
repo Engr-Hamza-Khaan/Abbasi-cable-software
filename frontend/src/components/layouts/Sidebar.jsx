@@ -45,14 +45,14 @@ const adminMenuItems = [
   { id: 'settings', icon: Settings, label: "Settings" },
 ];
 
-const userMenuItems = [
+const employeeMenuItems = [
   { id: 'inventory', icon: Package, label: "Inventory" },
   { id: 'reports', icon: FileText, label: "Reports" },
 ];
 
 function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCount, user, onLogout }) {
   const navigate = useNavigate();
-  const menuItems = user?.role === 'admin' ? adminMenuItems : userMenuItems;
+  const menuItems = user?.role === 'admin' ? adminMenuItems : employeeMenuItems;
   const [expandeditems, setExpandedItems] = useState(new Set(['analytics']));
   const toogleExpended = (itemid) => {
     const newExpended = new Set(expandeditems);

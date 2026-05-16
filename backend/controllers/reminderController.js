@@ -5,6 +5,7 @@ const { sendSms } = require('../utils/smsSender');
 exports.getAllCustomers = async (req, res) => {
   try {
     const customers = await CustomerDue.findAll({
+      where: { shopId: req.context.shopId },
       order: [['dueDate', 'ASC']]
     });
     res.status(200).json({ success: true, data: customers });
@@ -26,7 +27,8 @@ exports.addCustomer = async (req, res) => {
       customerName,
       phoneNumber,
       dueAmount,
-      dueDate
+      dueDate,
+      shopId: req.context.shopId
     });
 
     res.status(201).json({ success: true, data: newCustomer });
@@ -41,9 +43,11 @@ exports.updateCustomer = async (req, res) => {
     const { id } = req.params;
     const { customerName, phoneNumber, dueAmount, dueDate, paymentStatus } = req.body;
 
-    const customer = await CustomerDue.findByPk(id);
+    const customer = await CustomerDue.findOne({
+      where: { id, shopId: req.context.shopId }
+    });
     if (!customer) {
-      return res.status(404).json({ success: false, error: 'Customer not found' });
+      return res.status(404).json({ success: false, error: 'Customer not found or access denied' });
     }
 
     customer.customerName = customerName || customer.customerName;
@@ -68,11 +72,13 @@ exports.sendManualSms = async (req, res) => {
     const { id } = req.params;
     console.log(`[Backend Debug] Controller received request to send SMS for ID: ${id}`);
     
-    const customer = await CustomerDue.findByPk(id);
+    const customer = await CustomerDue.findOne({
+      where: { id, shopId: req.context.shopId }
+    });
     
     if (!customer) {
-      console.log(`[Backend Debug] Customer ID ${id} not found in DB.`);
-      return res.status(404).json({ success: false, error: 'Customer not found' });
+      console.log(`[Backend Debug] Customer ID ${id} not found or access denied.`);
+      return res.status(404).json({ success: false, error: 'Customer not found or access denied' });
     }
 
     console.log(`[Backend Debug] Calling sendSms utility for customer: ${customer.customerName} (${customer.phoneNumber})`);

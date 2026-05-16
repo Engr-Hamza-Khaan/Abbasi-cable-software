@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Shop = require('../models/Shop');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const { Op } = require('sequelize');
@@ -8,7 +9,7 @@ const { Op } = require('sequelize');
 // @route   POST /api/auth/register
 // @access  Public (Allowed initially for creating admin)
 const registerUser = async (req, res) => {
-  const { name, username, email, password, role } = req.body;
+  const { name, username, email, password, role, shopId } = req.body;
 
   try {
     const userExists = await User.findOne({ where: { username } });
@@ -21,12 +22,24 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
+    if (role === 'employee' && !shopId) {
+      return res.status(400).json({ message: 'Shop is required for employee' });
+    }
+
+    if (shopId) {
+      const shopExists = await Shop.findByPk(shopId);
+      if (!shopExists) {
+        return res.status(400).json({ message: 'Invalid shop selected' });
+      }
+    }
+
     const user = await User.create({
       name,
       username,
       email,
       password,
-      role: role || 'user',
+      role: role || 'employee',
+      shopId: role === 'employee' ? shopId : (shopId || null),
     });
 
     if (user) {
@@ -36,6 +49,7 @@ const registerUser = async (req, res) => {
         name: user.name,
         username: user.username,
         role: user.role,
+        shopId: user.shopId,
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -61,7 +75,8 @@ const loginUser = async (req, res) => {
         name: user.name,
         username: user.username,
         role: user.role,
-        token: generateToken(user.id),
+        shopId: user.shopId,
+        token: generateToken(user),
       });
     } else {
       res.status(401).json({ message: 'Invalid credentials' });
@@ -79,10 +94,14 @@ const getMe = async (req, res) => {
 };
 
 // Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user.id, role: user.role, shopId: user.shopId },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: '30d',
+    }
+  );
 };
 
 // @desc    Forgot password

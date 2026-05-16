@@ -1,27 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, User, Lock, AlertCircle, Loader2, Cable, ShieldCheck } from 'lucide-react';
+import { UserPlus, User, Lock, AlertCircle, Loader2, Cable, ShieldCheck, Store } from 'lucide-react';
 
 const Signup = () => {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user');
+  const [role, setRole] = useState('employee');
+  const [shopId, setShopId] = useState('');
+  const [shops, setShops] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fetchingShops, setFetchingShops] = useState(true);
   const { signup } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchShops = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/shops');
+        setShops(response.data);
+      } catch (err) {
+        console.error('Error fetching shops:', err);
+      } finally {
+        setFetchingShops(false);
+      }
+    };
+    fetchShops();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const result = await signup(name, username, email, password, role);
+    if (role === 'employee' && !shopId) {
+      setError('Please select a shop');
+      setLoading(false);
+      return;
+    }
+
+    const result = await signup(name, username, email, password, role, shopId);
     if (result.success) {
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => {
@@ -132,9 +156,9 @@ const Signup = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setRole('user')}
+                  onClick={() => setRole('employee')}
                   className={`py-3 px-4 rounded-2xl border flex items-center justify-center gap-2 transition-all ${
-                    role === 'user'
+                    role === 'employee'
                       ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20'
                       : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'
                   }`}
@@ -143,6 +167,36 @@ const Signup = () => {
                   <span className="font-semibold text-sm">Staff User</span>
                 </button>
               </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-300 ml-1">Select Shop</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Store className="h-5 w-5 text-slate-500" />
+                </div>
+                <select
+                  required={role === 'employee'}
+                  value={shopId}
+                  onChange={(e) => setShopId(e.target.value)}
+                  className="block w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none"
+                >
+                  <option value="" disabled className="bg-slate-800">Select a Shop</option>
+                  {shops.map((shop) => (
+                    <option key={shop.id} value={shop.id} className="bg-slate-800">
+                      {shop.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                  <Cable className="h-4 w-4 text-slate-500" />
+                </div>
+              </div>
+              {fetchingShops && (
+                <p className="text-[10px] text-slate-500 ml-1 mt-1 animate-pulse">
+                  Fetching available shops...
+                </p>
+              )}
             </div>
 
             {error && (
