@@ -14,7 +14,9 @@ const expenseRoutes = require('./routes/expenseRoutes');
 const ledgerRoutes = require('./routes/ledgerRoutes');
 const bultyRoutes = require('./routes/bultyRoutes');
 const manufacturingRoutes = require('./routes/manufacturingRoutes');
+const activityRoutes = require('./routes/activityRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
+const { ensureSchema } = require('./utils/ensureSchema');
 
 require('./cron/reminderCron'); // Start cron jobs
 dotenv.config();
@@ -37,6 +39,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/ledger', ledgerRoutes);
 app.use('/api/bulty', bultyRoutes);
 app.use('/api/manufacturing', manufacturingRoutes);
+app.use('/api/activity-logs', activityRoutes);
 
 app.use(errorHandler);
 
@@ -45,8 +48,9 @@ sequelize
   .authenticate()
   .then(() => {
     console.log('PostgreSQL Connected');
-    return sequelize.sync(); // This will create tables if they don't exist
+    return sequelize.sync();
   })
+  .then(() => ensureSchema())
   .then(() => console.log('Database Synchronized'))
   .catch((err) => console.log('PostgreSQL Connection Error:', err));
 

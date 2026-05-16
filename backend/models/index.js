@@ -12,12 +12,18 @@ const Expense = require('./Expense');
 const LedgerCustomer = require('./LedgerCustomer');
 const BultyRecord = require('./BultyRecord');
 const ManufacturingImage = require('./ManufacturingImage');
+const ActivityLog = require('./ActivityLog');
 
 Product.hasMany(ProductVariant, { foreignKey: 'productId', as: 'variants', onDelete: 'CASCADE' });
 ProductVariant.belongsTo(Product, { foreignKey: 'productId' });
 
 Shop.hasMany(Product, { foreignKey: 'shopId' });
 Product.belongsTo(Shop, { foreignKey: 'shopId' });
+
+User.hasMany(ActivityLog, { foreignKey: 'userId' });
+ActivityLog.belongsTo(User, { foreignKey: 'userId' });
+Shop.hasMany(ActivityLog, { foreignKey: 'shopId' });
+ActivityLog.belongsTo(Shop, { foreignKey: 'shopId' });
 
 module.exports = {
   sequelize,
@@ -34,4 +40,5 @@ module.exports = {
   LedgerCustomer,
   BultyRecord,
   ManufacturingImage,
+  ActivityLog,
 };

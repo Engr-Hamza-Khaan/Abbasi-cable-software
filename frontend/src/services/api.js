@@ -51,6 +51,10 @@ export const fetchSales = (shopParams) =>
 export const createSale = (data, shopId) =>
   api.post('/sales', withShopBody(data, shopId)).then((r) => r.data);
 
+// Reminders (credit dues)
+export const createReminderCustomer = (data, shopId) =>
+  api.post('/reminders/customers', withShopBody(data, shopId)).then((r) => r.data.data);
+
 // Purchases
 export const fetchPurchases = (shopParams) =>
   api.get('/purchases', withShopParams(shopParams)).then((r) => r.data.data);
@@ -107,5 +111,12 @@ export const createManufacturingImagesBulk = (images, shopId) =>
 
 export const deleteManufacturingImage = (id) =>
   api.delete(`/manufacturing/${id}`).then((r) => r.data);
+
+// Activity logs (admin only)
+export const fetchActivityLogs = (params = {}) =>
+  api.get('/activity-logs', { params }).then((r) => ({
+    data: r.data.data,
+    pagination: r.data.pagination,
+  }));
 
 export default api;

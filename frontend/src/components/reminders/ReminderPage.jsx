@@ -6,7 +6,7 @@ import { useShop } from '../../context/ShopContext';
 const API_URL = 'http://localhost:5000/api/reminders/customers';
 
 const ReminderPage = () => {
-  const { getShopQueryParams } = useShop();
+  const { getShopQueryParams, selectedShopId } = useShop();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);

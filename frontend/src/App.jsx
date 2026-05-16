@@ -23,6 +23,7 @@ import ExpenseManager from './components/expense/ExpenseManager';
 import Ledger from './components/ledger/Ledger';
 import Bulty from './components/bulty/Bulty';
 import ReminderPage from './components/reminders/ReminderPage';
+import ActivityLogPage from './components/activity/ActivityLogPage';
 
 const AppContent = () => {
   const { user, logout } = useAuth();
@@ -212,6 +213,7 @@ const AppContent = () => {
                   />
                   <Route path="/reminders" element={<ReminderPage />} />
                   <Route path="/bulty" element={<Bulty getWriteShopId={getWriteShopId} />} />
+                  <Route path="/activity-logs" element={<ActivityLogPage />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

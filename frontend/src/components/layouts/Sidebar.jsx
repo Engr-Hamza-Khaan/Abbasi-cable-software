@@ -16,7 +16,8 @@ import {
   ShoppingBag,
   Users,
   Zap,
-  Truck
+  Truck,
+  History
 } from 'lucide-react'
 
 import profileImage from '../../assets/profilePic.jpg'
@@ -42,6 +43,14 @@ const adminMenuItems = [
     ]
   },
   { id: 'reports', icon: FileText, label: "Reports" },
+  {
+    id: 'user-management',
+    icon: Users,
+    label: "User Management",
+    submenu: [
+      { id: 'activity-logs', label: "Activity Log", icon: History },
+    ],
+  },
   { id: 'settings', icon: Settings, label: "Settings" },
 ];
 
@@ -53,7 +62,7 @@ const employeeMenuItems = [
 function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCount, user, onLogout }) {
   const navigate = useNavigate();
   const menuItems = user?.role === 'admin' ? adminMenuItems : employeeMenuItems;
-  const [expandeditems, setExpandedItems] = useState(new Set(['analytics']));
+  const [expandeditems, setExpandedItems] = useState(new Set(['user-management']));
   const toogleExpended = (itemid) => {
     const newExpended = new Set(expandeditems);
 
@@ -91,7 +100,7 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
           return (
             <div key={item.id}>
               <button className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 
-                ${currentPage === item.id
+                ${currentPage === item.id || item.submenu?.some((s) => s.id === currentPage)
                   ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 "
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 "
                 }`} onClick={() => {

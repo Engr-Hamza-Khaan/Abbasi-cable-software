@@ -59,6 +59,7 @@ exports.createSale = asyncHandler(async (req, res) => {
     const sale = await Sale.create(
       {
         shopId,
+        invoiceId: body.invoiceId || null,
         productId: body.productId,
         variantId: body.variantId,
         productName: body.productName || product.name,

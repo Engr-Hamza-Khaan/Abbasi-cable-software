@@ -46,6 +46,7 @@ const formatPurchase = (p) => ({
 
 const formatSale = (s) => ({
   id: s.id,
+  invoiceId: s.invoiceId || null,
   shopId: s.shopId,
   productId: s.productId,
   variantId: s.variantId,
@@ -66,6 +67,7 @@ const formatSale = (s) => ({
   paidAmount: toNum(s.paidAmount),
   credit: toNum(s.credit),
   date: s.date,
+  createdAt: s.createdAt,
 });
 
 const formatCashTransaction = (t) => ({
