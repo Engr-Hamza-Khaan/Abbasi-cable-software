@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Download, Image as ImageIcon, Trash2, FileImage, ShieldCheck, ChevronDown, FileText } from 'lucide-react';
+import { useShop } from '../../context/ShopContext';
+import {
+  fetchManufacturingImages,
+  createManufacturingImagesBulk,
+  deleteManufacturingImage,
+} from '../../services/api';
 
-const Manufacturing = () => {
+const Manufacturing = ({ getWriteShopId }) => {
+  const { getShopQueryParams } = useShop();
   const [images, setImages] = useState([]);
   const [openId, setOpenId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load images from localStorage on mount
   useEffect(() => {
-    const savedImages = localStorage.getItem('manufacturing_batch_images');
-    if (savedImages) {
+    const load = async () => {
+      setLoading(true);
       try {
-        const parsed = JSON.parse(savedImages);
-        setImages(parsed);
-        if (parsed.length > 0) setOpenId(parsed[0].id);
+        const data = await fetchManufacturingImages(getShopQueryParams());
+        setImages(data);
+        if (data.length > 0) setOpenId(data[0].id);
       } catch (e) {
-        console.error("Error parsing saved images", e);
+        console.error('Error loading manufacturing images', e);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, []);
+    };
+    load();
+  }, [getShopQueryParams]);
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -29,7 +39,7 @@ const Manufacturing = () => {
     files.forEach((file) => {
       // Check file size (limit to 2MB per file to be safer with localStorage limits)
       if (file.size > 2 * 1024 * 1024) {
-        alert(`File "${file.name}" is too large. Limit is 2MB per file for local storage.`);
+        alert(`File "${file.name}" is too large. Limit is 2MB per file.`);
         processedCount++;
         return;
       }
@@ -53,11 +63,21 @@ const Manufacturing = () => {
     });
   };
 
-  const updateImagesState = (newOnes) => {
-    const updatedList = [...images, ...newOnes];
-    setImages(updatedList);
-    localStorage.setItem('manufacturing_batch_images', JSON.stringify(updatedList));
-    if (newOnes.length > 0) setOpenId(newOnes[0].id); // Open the latest one
+  const updateImagesState = async (newOnes) => {
+    const shopId = getWriteShopId?.();
+    if (!shopId) {
+      alert('Please select a specific shop before uploading images.');
+      return;
+    }
+    try {
+      const payload = newOnes.map((img) => ({ name: img.name, base64: img.base64 }));
+      const created = await createManufacturingImagesBulk(payload, shopId);
+      const updatedList = [...created, ...images];
+      setImages(updatedList);
+      if (created.length > 0) setOpenId(created[0].id);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to upload images');
+    }
   };
 
   const downloadImage = (img) => {
@@ -69,13 +89,16 @@ const Manufacturing = () => {
     document.body.removeChild(link);
   };
 
-  const removeImage = (id, e) => {
+  const removeImage = async (id, e) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to remove this record?")) {
-      const updatedList = images.filter(img => img.id !== id);
+    if (!window.confirm('Are you sure you want to remove this record?')) return;
+    try {
+      await deleteManufacturingImage(id);
+      const updatedList = images.filter((img) => img.id !== id);
       setImages(updatedList);
-      localStorage.setItem('manufacturing_batch_images', JSON.stringify(updatedList));
       if (openId === id) setOpenId(updatedList.length > 0 ? updatedList[0].id : null);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete image');
     }
   };
 
@@ -112,7 +135,9 @@ const Manufacturing = () => {
         </div>
       </div>
 
-      {images.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-12 text-slate-500">Loading manufacturing records...</div>
+      ) : images.length > 0 ? (
         <div className="grid gap-4">
           {images.map((img) => (
             <div 

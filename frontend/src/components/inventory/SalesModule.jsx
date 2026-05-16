@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Send, User, ChevronRight, AlertCircle, ShoppingBag, Printer, FileText, Phone } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { createSale } from '../../services/api';
 
-const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactions }) => {
+const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactions, getWriteShopId, refreshAll }) => {
   const [formData, setFormData] = useState({
     productId: '',
     variantId: '',
@@ -223,9 +224,9 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
     window.open(doc.output('bloburl'), '_blank');
   };
 
-  const selectedProduct = products.find(p => p.id === parseInt(formData.productId));
+  const selectedProduct = products.find(p => String(p.id) === String(formData.productId));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -248,84 +249,61 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
       return;
     }
 
-    // Update product stock within variants
-    const updatedProducts = products.map(p => {
-      if (p.id === selectedProduct.id) {
-        return {
-          ...p,
-          variants: p.variants.map(v =>
-            v.id.toString() === formData.variantId.toString()
-              ? { ...v, stock: v.stock - parseInt(formData.length) }
-              : v
-          )
-        };
-      }
-      return p;
-    });
-    setProducts(updatedProducts);
-
-    // Record sales
-    const newSale = {
-      ...formData,
-      id: Date.now(),
-      productName: selectedProduct.name,
-      color: selectedProduct.color,
-      size: selectedVariant.size,
-      type: selectedVariant.type,
-      core: selectedVariant.core,
-      total: formData.length * formData.price,
-      cashAmount: formData.paymentType === 'online' ? 0 : formData.cashAmount,
-      onlineAmount: formData.paymentType === 'cash' ? 0 : formData.onlineAmount,
-      paidAmount: (formData.paymentType === 'cash' ? formData.cashAmount :
-        formData.paymentType === 'online' ? formData.onlineAmount :
-          (formData.cashAmount + formData.onlineAmount)),
-      credit: (formData.length * formData.price) -
-        (formData.paymentType === 'cash' ? formData.cashAmount :
-          formData.paymentType === 'online' ? formData.onlineAmount :
-            (formData.cashAmount + formData.onlineAmount))
-    };
-    setSales([newSale, ...sales]);
-    setLastSale(newSale);
-
-    // Sync with Cash Flow
-    if (setCashTransactions) {
-      const cashFlowTx = {
-        id: Date.now() + 1, // Slightly different ID
-        date: formData.date,
-        type: 'income',
-        amount: newSale.total,
-        cashAmount: newSale.cashAmount,
-        onlineAmount: newSale.onlineAmount,
-        creditAmount: newSale.credit,
-        source: 'sale',
-        color: newSale.color,
-        description: `Sale: ${formData.customer || 'Walk-in'} (${selectedProduct.name})`,
-        referenceId: newSale.id.toString(),
-        paymentDetail: newSale.paymentDetail
-      };
-      setCashTransactions(prev => [...prev, cashFlowTx]);
+    const shopId = getWriteShopId?.();
+    if (!shopId) {
+      setError('Please select a specific shop before recording a sale.');
+      return;
     }
 
-    // Success message and reset
-    setMessage(`Successfully issued ${formData.length} ${selectedProduct.unit}s of ${selectedProduct.name}`);
-    
-    // Automatically trigger invoice if needed or just provide button
-    // generateInvoice(newSale); // Uncomment to auto-download
-    
-    setTimeout(() => setMessage(''), 5000); // Increased timeout to see print button
-    setFormData({
-      productId: '',
-      variantId: '',
-      length: 1,
-      price: 0,
-      cashAmount: 0,
-      onlineAmount: 0,
-      paymentType: 'cash',
-      paymentDetail: '',
-      customer: '',
-      contact: '',
-      date: new Date().toISOString().split('T')[0]
-    });
+    try {
+      const payload = {
+        productId: formData.productId,
+        variantId: formData.variantId,
+        productName: selectedProduct.name,
+        color: selectedProduct.color,
+        size: selectedVariant.size,
+        type: selectedVariant.type,
+        core: selectedVariant.core,
+        length: formData.length,
+        price: formData.price,
+        customer: formData.customer,
+        contact: formData.contact,
+        paymentType: formData.paymentType,
+        paymentDetail: formData.paymentDetail,
+        cashAmount: formData.cashAmount,
+        onlineAmount: formData.onlineAmount,
+        date: formData.date,
+      };
+
+      const result = await createSale(payload, shopId);
+      const newSale = result.data;
+      setSales([newSale, ...sales]);
+      setLastSale(newSale);
+
+      if (setCashTransactions && result.cashTransaction) {
+        setCashTransactions((prev) => [...prev, result.cashTransaction]);
+      }
+
+      if (refreshAll) await refreshAll();
+
+      setMessage(`Successfully issued ${formData.length} ${selectedProduct.unit}s of ${selectedProduct.name}`);
+      setTimeout(() => setMessage(''), 5000);
+      setFormData({
+        productId: '',
+        variantId: '',
+        length: 1,
+        price: 0,
+        cashAmount: 0,
+        onlineAmount: 0,
+        paymentType: 'cash',
+        paymentDetail: '',
+        customer: '',
+        contact: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to record sale');
+    }
   };
 
   return (

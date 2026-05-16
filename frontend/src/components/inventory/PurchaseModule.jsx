@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Calendar, Tag, PlusCircle, History, Phone } from 'lucide-react';
+import { createPurchase } from '../../services/api';
 
-const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCashTransactions }) => {
+const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCashTransactions, getWriteShopId, refreshAll }) => {
   const [formData, setFormData] = useState({
     productId: '',
     size: '',
@@ -33,95 +34,59 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
 
   const [message, setMessage] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.productId || formData.length <= 0) {
       alert("Please select a product and valid length.");
       return;
     }
 
-    const selectedProduct = products.find(p => p.id === parseInt(formData.productId));
+    const selectedProduct = products.find(p => String(p.id) === String(formData.productId));
     if (!selectedProduct) return;
 
-    // Update product variants
-    const updatedProducts = products.map(p => {
-      if (p.id === selectedProduct.id) {
-        const newBatch = {
-          id: Date.now() + Math.random(),
-          label: formData.batchLabel || `Purchase - ${formData.date}`,
-          size: formData.size,
-          type: formData.type,
-          core: formData.core,
-          stock: parseInt(formData.length),
-          unitPrice: parseFloat(formData.unitPrice),
-          date: formData.date
-        };
-        return {
-          ...p,
-          variants: [...(p.variants || []), newBatch]
-        };
-      }
-      return p;
-    });
-    setProducts(updatedProducts);
-
-    // Record purchase
-    const newPurchase = {
-      ...formData,
-      id: Date.now(),
-      productName: selectedProduct.name,
-      color: selectedProduct.color,
-      total: formData.length * formData.unitPrice,
-      cashAmount: formData.paymentType === 'online' ? 0 : formData.cashAmount,
-      onlineAmount: formData.paymentType === 'cash' ? 0 : formData.onlineAmount,
-      paidAmount: (formData.paymentType === 'cash' ? formData.cashAmount :
-        formData.paymentType === 'online' ? formData.onlineAmount :
-          (formData.cashAmount + formData.onlineAmount)),
-      credit: (formData.length * formData.unitPrice) -
-        (formData.paymentType === 'cash' ? formData.cashAmount :
-          formData.paymentType === 'online' ? formData.onlineAmount :
-            (formData.cashAmount + formData.onlineAmount))
-    };
-    setPurchases([newPurchase, ...purchases]);
-
-    // Sync with Cash Flow
-    if (setCashTransactions) {
-      const cashFlowTx = {
-        id: Date.now() + 1,
-        date: formData.date,
-        type: 'expense',
-        amount: newPurchase.total,
-        cashAmount: newPurchase.cashAmount,
-        onlineAmount: newPurchase.onlineAmount,
-        creditAmount: newPurchase.credit,
-        source: 'purchase',
-        color: newPurchase.color,
-        description: `Purchase: ${selectedProduct.name} from ${formData.vendor || 'Unknown'}`,
-        referenceId: newPurchase.id.toString(),
-        paymentDetail: newPurchase.paymentDetail
-      };
-      setCashTransactions(prev => [...prev, cashFlowTx]);
+    const shopId = getWriteShopId?.();
+    if (!shopId) {
+      alert('Please select a specific shop before recording a purchase.');
+      return;
     }
 
-    // Success message and reset
-    setMessage(`Successfully added ${formData.length} ${selectedProduct.unit}s to ${selectedProduct.name}`);
-    setTimeout(() => setMessage(''), 3000);
-    setFormData({
-      productId: '',
-      size: '',
-      type: 'Standard',
-      core: 'Single Core',
-      length: 1,
-      unitPrice: 0,
-      vendor: '',
-      contact: '',
-      batchLabel: '',
-      cashAmount: 0,
-      onlineAmount: 0,
-      paymentType: 'cash',
-      paymentDetail: '',
-      date: new Date().toISOString().split('T')[0]
-    });
+    try {
+      const result = await createPurchase(
+        {
+          ...formData,
+          productName: selectedProduct.name,
+          color: selectedProduct.color,
+        },
+        shopId
+      );
+
+      setPurchases([result.data, ...purchases]);
+      if (setCashTransactions && result.cashTransaction) {
+        setCashTransactions((prev) => [...prev, result.cashTransaction]);
+      }
+      if (refreshAll) await refreshAll();
+
+      setMessage(`Successfully added ${formData.length} ${selectedProduct.unit}s to ${selectedProduct.name}`);
+      setTimeout(() => setMessage(''), 3000);
+      setFormData({
+        productId: '',
+        size: '',
+        type: 'Standard',
+        core: 'Single Core',
+        length: 1,
+        unitPrice: 0,
+        vendor: '',
+        contact: '',
+        batchLabel: '',
+        cashAmount: 0,
+        onlineAmount: 0,
+        paymentType: 'cash',
+        paymentDetail: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to record purchase');
+    }
   };
 
   return (

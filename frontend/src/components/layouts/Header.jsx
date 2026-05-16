@@ -48,13 +48,10 @@ function Header({ sidebarCollapsed, onToggleSidebar, theme, toggleTheme, user })
                 <Store className="h-5 w-5 text-blue-500" />
               </div>
               <select
-                value={selectedShopId || 'all'}
+                value={selectedShopId || ''}
                 onChange={(e) => setSelectedShopId(e.target.value)}
                 className="w-full pl-11 pr-10 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer appearance-none shadow-sm hover:bg-slate-200 dark:hover:bg-slate-700"
               >
-                <option value="all" className="bg-white dark:bg-slate-900 font-medium">
-                  All Shops
-                </option>
                 {shops.map((shop) => (
                   <option key={shop.id} value={shop.id} className="bg-white dark:bg-slate-900 font-medium">
                     {shop.name}

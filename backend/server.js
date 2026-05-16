@@ -2,9 +2,19 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const sequelize = require('./config/db');
+require('./models'); // Register associations
 const authRoutes = require('./routes/authRoutes');
 const shopRoutes = require('./routes/shopRoutes');
 const reminderRoutes = require('./routes/reminderRoutes');
+const productRoutes = require('./routes/productRoutes');
+const saleRoutes = require('./routes/saleRoutes');
+const purchaseRoutes = require('./routes/purchaseRoutes');
+const cashFlowRoutes = require('./routes/cashFlowRoutes');
+const expenseRoutes = require('./routes/expenseRoutes');
+const ledgerRoutes = require('./routes/ledgerRoutes');
+const bultyRoutes = require('./routes/bultyRoutes');
+const manufacturingRoutes = require('./routes/manufacturingRoutes');
+const { errorHandler } = require('./middleware/errorMiddleware');
 
 require('./cron/reminderCron'); // Start cron jobs
 dotenv.config();
@@ -13,12 +23,22 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/reminders', reminderRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/sales', saleRoutes);
+app.use('/api/purchases', purchaseRoutes);
+app.use('/api/cash-flow', cashFlowRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/ledger', ledgerRoutes);
+app.use('/api/bulty', bultyRoutes);
+app.use('/api/manufacturing', manufacturingRoutes);
+
+app.use(errorHandler);
 
 // Database connection
 sequelize

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ShoppingBag, Home, Store, Truck, Plus, Search, DollarSign, X, Calendar, FileText, Trash2, Tag } from 'lucide-react';
+import { createExpense, deleteExpense } from '../../services/api';
 
-const ExpenseManager = ({ type = 'general', expenses, setExpenses, setCashTransactions }) => {
+const ExpenseManager = ({ type = 'general', expenses, setExpenses, setCashTransactions, getWriteShopId }) => {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [newExpense, setNewExpense] = useState({
@@ -52,51 +53,53 @@ const ExpenseManager = ({ type = 'general', expenses, setExpenses, setCashTransa
 
   const totalAmount = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
 
-  const handleAddExpense = (e) => {
+  const handleAddExpense = async (e) => {
     e.preventDefault();
     if (!newExpense.description || !newExpense.amount) return;
 
-    const expenseId = Date.now().toString();
-    const expenseEntry = {
-      id: expenseId,
-      ...newExpense,
-      category: type,
-      amount: parseFloat(newExpense.amount)
-    };
+    const shopId = getWriteShopId?.();
+    if (!shopId) {
+      alert('Please select a specific shop before adding expenses.');
+      return;
+    }
 
-    // Add to expenses
-    setExpenses(prev => [...prev, expenseEntry]);
+    try {
+      const result = await createExpense(
+        {
+          ...newExpense,
+          category: type,
+          amount: parseFloat(newExpense.amount),
+        },
+        shopId
+      );
 
-    // Add to cash transactions
-    const transactionEntry = {
-      id: `exp-${expenseId}`,
-      date: newExpense.date,
-      description: `[${config.label}] ${newExpense.description}`,
-      amount: parseFloat(newExpense.amount),
-      cashAmount: newExpense.paymentMethod === 'cash' ? parseFloat(newExpense.amount) : 0,
-      onlineAmount: newExpense.paymentMethod === 'online' ? parseFloat(newExpense.amount) : 0,
-      creditAmount: 0,
-      type: 'expense',
-      source: 'manual',
-      color: config.color.toUpperCase(),
-      referenceId: expenseId
-    };
-    setCashTransactions(prev => [...prev, transactionEntry]);
+      setExpenses((prev) => [...prev, result.data]);
+      if (setCashTransactions && result.cashTransaction) {
+        setCashTransactions((prev) => [...prev, result.cashTransaction]);
+      }
 
-    // Reset and close
-    setNewExpense({
-      description: '',
-      amount: '',
-      date: new Date().toISOString().split('T')[0],
-      paymentMethod: 'cash'
-    });
-    setShowModal(false);
+      setNewExpense({
+        description: '',
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        paymentMethod: 'cash',
+      });
+      setShowModal(false);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add expense');
+    }
   };
 
-  const handleDeleteExpense = (id) => {
-    if (window.confirm('Are you sure you want to delete this expense?')) {
-      setExpenses(prev => prev.filter(exp => exp.id !== id));
-      setCashTransactions(prev => prev.filter(tx => tx.referenceId !== id));
+  const handleDeleteExpense = async (id) => {
+    if (!window.confirm('Delete this expense?')) return;
+    try {
+      await deleteExpense(id);
+      setExpenses((prev) => prev.filter((e) => e.id !== id));
+      if (setCashTransactions) {
+        setCashTransactions((prev) => prev.filter((t) => t.referenceId !== id));
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete expense');
     }
   };
 

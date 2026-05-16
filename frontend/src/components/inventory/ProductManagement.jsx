@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, Package, Search, AlertTriangle, FileUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { createProduct, updateProduct, deleteProduct as deleteProductApi, bulkCreateProducts } from '../../services/api';
 
-const ProductManagement = ({ products, setProducts }) => {
+const ProductManagement = ({ products, setProducts, getWriteShopId, refreshAll }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -21,21 +22,36 @@ const ProductManagement = ({ products, setProducts }) => {
     return matchesSearch && matchesColor;
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const shopId = getWriteShopId?.();
+    if (!shopId) {
+      alert('Please select a specific shop before managing products.');
+      return;
+    }
+
     const productData = {
       ...formData,
-      minStock: parseInt(formData.minStock) || 0
+      minStock: parseInt(formData.minStock, 10) || 0,
     };
 
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id ? { ...p, ...productData } : p));
-    } else {
-      setProducts([...products, { ...productData, id: Date.now(), variants: [] }]);
+    try {
+      if (editingProduct) {
+        const updated = await updateProduct(editingProduct.id, {
+          ...productData,
+          variants: editingProduct.variants || [],
+        });
+        setProducts(products.map((p) => (p.id === editingProduct.id ? updated : p)));
+      } else {
+        const created = await createProduct({ ...productData, variants: [] }, shopId);
+        setProducts([...products, created]);
+      }
+      setShowModal(false);
+      setEditingProduct(null);
+      setFormData({ name: '', unit: 'meter', minStock: '', color: 'Red' });
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to save product');
     }
-    setShowModal(false);
-    setEditingProduct(null);
-    setFormData({ name: '', unit: 'meter', minStock: '', color: 'Red' });
   };
 
   const editProduct = (e, product) => {
@@ -50,10 +66,14 @@ const ProductManagement = ({ products, setProducts }) => {
     setShowModal(true);
   };
 
-  const deleteProduct = (e, id) => {
+  const handleDeleteProduct = async (e, id) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter(p => p.id !== id));
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await deleteProductApi(id);
+      setProducts(products.filter((p) => p.id !== id));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete product');
     }
   };
 
@@ -61,8 +81,14 @@ const ProductManagement = ({ products, setProducts }) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    const shopId = getWriteShopId?.();
+    if (!shopId) {
+      alert('Please select a specific shop before bulk upload.');
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       const bstr = evt.target.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
       const wsname = wb.SheetNames[0];
@@ -73,50 +99,35 @@ const ProductManagement = ({ products, setProducts }) => {
         const productName = row.Name || row.name || 'Unnamed Product';
         if (!acc[productName]) {
           acc[productName] = {
-            id: Date.now() + Math.random(),
             name: productName,
             unit: row.Unit || row.unit || 'meter',
-            minStock: parseInt(row['Min Stock'] || row.minStock) || 0,
-            variants: []
+            minStock: parseInt(row['Min Stock'] || row.minStock, 10) || 0,
+            color: row.Color || row.color || 'Red',
+            variants: [],
           };
         }
 
         acc[productName].variants.push({
-          id: Date.now() + Math.random(),
           label: row['Batch Label'] || row.batchLabel || row.Label || 'Initial Batch',
-          stock: parseInt(row.Quantity || row.quantity || row.Stock || row.stock) || 0,
+          stock: parseInt(row.Quantity || row.quantity || row.Stock || row.stock, 10) || 0,
           unitPrice: parseFloat(row.Price || row.price || row.Rate || row.rate) || 0,
-          date: row.Date || row.date || new Date().toISOString().split('T')[0]
+          date: row.Date || row.date || new Date().toISOString().split('T')[0],
         });
 
         return acc;
       }, {});
 
       const newProductsList = Object.values(groupedProducts);
-      
-      setProducts(prevProducts => {
-        let updatedList = [...prevProducts];
-        
-        newProductsList.forEach(newP => {
-          const existingIdx = updatedList.findIndex(p => p.name.toLowerCase() === newP.name.toLowerCase());
-          
-          if (existingIdx > -1) {
-            // Existing product found: append new variants to it
-            updatedList[existingIdx] = {
-              ...updatedList[existingIdx],
-              variants: [...(updatedList[existingIdx].variants || []), ...newP.variants]
-            };
-          } else {
-            // New product: add to list
-            updatedList.push(newP);
-          }
-        });
-        
-        return updatedList;
-      });
 
-      alert(`Upload complete! Processed ${newProductsList.length} unique products.`);
-      e.target.value = ''; // Reset input
+      try {
+        const created = await bulkCreateProducts(newProductsList, shopId);
+        if (refreshAll) await refreshAll();
+        else setProducts([...products, ...created]);
+        alert(`Upload complete! Processed ${newProductsList.length} unique products.`);
+      } catch (err) {
+        alert(err.response?.data?.message || 'Bulk upload failed');
+      }
+      e.target.value = '';
     };
     reader.readAsBinaryString(file);
   };
@@ -236,7 +247,7 @@ const ProductManagement = ({ products, setProducts }) => {
                 <button onClick={(e) => editProduct(e, product)} className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
                   <Edit2 className="w-4 h-4" />
                 </button>
-                <button onClick={(e) => deleteProduct(e, product.id)} className="p-2 text-slate-400 hover:text-red-600 transition-colors">
+                <button onClick={(e) => handleDeleteProduct(e, product.id)} className="p-2 text-slate-400 hover:text-red-600 transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>

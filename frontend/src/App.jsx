@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ShopProvider } from './context/ShopContext';
+import { InventoryProvider, useInventory } from './context/InventoryContext';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -8,7 +9,6 @@ import ResetPassword from './components/auth/ResetPassword';
 import PrivateRoute from './components/routing/PrivateRoute';
 import { useState, useEffect } from 'react';
 
-// Components
 import Sidebar from './components/layouts/Sidebar';
 import Header from './components/layouts/Header';
 import Dashboard from './components/dashboard/Dashboard';
@@ -26,77 +26,40 @@ import ReminderPage from './components/reminders/ReminderPage';
 
 const AppContent = () => {
   const { user, logout } = useAuth();
+  const {
+    productsWithTotalStock,
+    products,
+    setProducts,
+    purchases,
+    setPurchases,
+    sales,
+    setSales,
+    cashTransactions,
+    setCashTransactions,
+    expenses,
+    setExpenses,
+    loading: inventoryLoading,
+    error: inventoryError,
+    refreshAll,
+    getWriteShopId,
+  } = useInventory();
+
   const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-
-  // Lifted Inventory State (Moved from original App.jsx)
-  const [products, setProducts] = useState(() => {
-    const item = window.localStorage.getItem('inventory-products');
-    if (item) {
-      const parsed = JSON.parse(item);
-      return parsed.map(p => ({
-        ...p,
-        variants: p.variants || [{ id: Date.now() + Math.random(), label: 'Default Batch', stock: p.stock || 0, unitPrice: 0 }],
-        stock: undefined
-      }));
-    }
-    return [
-      { id: 1, name: 'Copper Cable 2.5mm', unit: 'meter', minStock: 200, variants: [{ id: 'v1', label: 'Batch A - 100m', stock: 50, unitPrice: 120, date: '2025-03-20' }, { id: 'v2', label: 'Batch B - 150m', stock: 1200, unitPrice: 115, date: '2025-04-05' }] },
-      { id: 2, name: 'Copper Cable 4.0mm', unit: 'meter', minStock: 150, variants: [{ id: 'v3', label: 'Main Stock', stock: 840, unitPrice: 180, date: '2025-03-15' }] },
-      { id: 3, name: 'Armored Cable 10mm', unit: 'meter', minStock: 100, variants: [{ id: 'v4', label: 'Warehouse A', stock: 45, unitPrice: 850, date: '2025-04-01' }] },
-    ];
-  });
-
-  const productsWithTotalStock = products.map(p => ({
-    ...p,
-    stock: p.variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0)
-  }));
-
-  const [purchases, setPurchases] = useState(() => {
-    const item = window.localStorage.getItem('inventory-purchases');
-    return item ? JSON.parse(item) : [];
-  });
-
-  const [sales, setSales] = useState(() => {
-    const item = window.localStorage.getItem('inventory-sales');
-    return item ? JSON.parse(item) : [];
-  });
-
-  const [cashTransactions, setCashTransactions] = useState(() => {
-    const item = window.localStorage.getItem('cashTransactions');
-    return item ? JSON.parse(item) : [];
-  });
-
-  const [expenses, setExpenses] = useState(() => {
-    const item = window.localStorage.getItem('inventory-expenses');
-    return item ? JSON.parse(item) : [];
-  });
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
-    window.localStorage.setItem('inventory-products', JSON.stringify(products));
-    window.localStorage.setItem('inventory-purchases', JSON.stringify(purchases));
-    window.localStorage.setItem('inventory-sales', JSON.stringify(sales));
-    window.localStorage.setItem('cashTransactions', JSON.stringify(cashTransactions));
-    window.localStorage.setItem('inventory-expenses', JSON.stringify(expenses));
-  }, [products, purchases, sales, cashTransactions, expenses]);
-
-  useEffect(() => {
-    if (theme === "dark") document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", theme);
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
+  const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
-  // Sync currentPage with URL for sidebar highlighting
   useEffect(() => {
     const path = window.location.pathname.replace('/', '');
-    if (path) {
-      setCurrentPage(path);
-    } else {
-      setCurrentPage('dashboard');
-    }
+    if (path) setCurrentPage(path);
+    else setCurrentPage('dashboard');
   }, [window.location.pathname]);
 
   if (!user) {
@@ -136,61 +99,123 @@ const AppContent = () => {
 
           <main className="flex-1 overflow-y-auto bg-transparent">
             <div className="p-6 space-y-6">
+              {inventoryLoading && (
+                <div className="text-center py-4 text-slate-500">Loading data...</div>
+              )}
+              {inventoryError && (
+                <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200">
+                  {inventoryError}
+                  <button type="button" onClick={refreshAll} className="ml-4 underline font-bold">
+                    Retry
+                  </button>
+                </div>
+              )}
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                
-                {/* Protected Routes */}
+
                 <Route element={<PrivateRoute allowedRoles={['admin', 'employee']} />}>
-                                    <Route path="/dashboard" element={user.role === 'admin' ? <Dashboard products={productsWithTotalStock} sales={sales} purchases={purchases} transactions={cashTransactions} expenses={expenses} /> : <Navigate to="/inventory" />} />
-                  <Route path="/inventory" element={
-                    <InventoryWrapper 
-                      products={productsWithTotalStock} 
-                      setProducts={setProducts} 
-                      purchases={purchases} 
-                      setPurchases={setPurchases} 
-                      sales={sales} 
-                      setSales={setSales} 
-                      setCashTransactions={setCashTransactions}
-                    />
-                  } />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      user.role === 'admin' ? (
+                        <Dashboard
+                          products={productsWithTotalStock}
+                          sales={sales}
+                          purchases={purchases}
+                          transactions={cashTransactions}
+                          expenses={expenses}
+                        />
+                      ) : (
+                        <Navigate to="/inventory" />
+                      )
+                    }
+                  />
+                  <Route
+                    path="/inventory"
+                    element={
+                      <InventoryWrapper
+                        products={productsWithTotalStock}
+                        setProducts={setProducts}
+                        purchases={purchases}
+                        setPurchases={setPurchases}
+                        sales={sales}
+                        setSales={setSales}
+                        setCashTransactions={setCashTransactions}
+                        getWriteShopId={getWriteShopId}
+                        refreshAll={refreshAll}
+                      />
+                    }
+                  />
                   <Route path="/reports" element={<Reports purchases={purchases} sales={sales} />} />
                   <Route path="/attendance" element={<Attendance />} />
-                  <Route path="/manufacturing" element={<Manufacturing />} />
+                  <Route path="/manufacturing" element={<Manufacturing getWriteShopId={getWriteShopId} />} />
                   <Route path="/zakat" element={<Zakat products={productsWithTotalStock} />} />
-                  <Route path="/expense-home" element={<ExpenseManager type="home" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
-                  <Route path="/expense-shop" element={<ExpenseManager type="shop" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
-                  <Route path="/expense-transport" element={<ExpenseManager type="transport" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
+                  <Route
+                    path="/expense-home"
+                    element={
+                      <ExpenseManager
+                        type="home"
+                        expenses={expenses}
+                        setExpenses={setExpenses}
+                        setCashTransactions={setCashTransactions}
+                        getWriteShopId={getWriteShopId}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/expense-shop"
+                    element={
+                      <ExpenseManager
+                        type="shop"
+                        expenses={expenses}
+                        setExpenses={setExpenses}
+                        setCashTransactions={setCashTransactions}
+                        getWriteShopId={getWriteShopId}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/expense-transport"
+                    element={
+                      <ExpenseManager
+                        type="transport"
+                        expenses={expenses}
+                        setExpenses={setExpenses}
+                        setCashTransactions={setCashTransactions}
+                        getWriteShopId={getWriteShopId}
+                      />
+                    }
+                  />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
 
-                {/* Admin Only Routes */}
                 <Route element={<PrivateRoute allowedRoles={['admin']} />}>
-                  <Route path="/cash-flow" element={<CashFlowDashboard transactions={cashTransactions} setTransactions={setCashTransactions} />} />
-                  <Route path="/ledger" element={<Ledger sales={sales} transactions={cashTransactions} />} />
+                  <Route
+                    path="/cash-flow"
+                    element={
+                      <CashFlowDashboard
+                        transactions={cashTransactions}
+                        setTransactions={setCashTransactions}
+                        getWriteShopId={getWriteShopId}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/ledger"
+                    element={
+                      <Ledger
+                        sales={sales}
+                        transactions={cashTransactions}
+                        getWriteShopId={getWriteShopId}
+                      />
+                    }
+                  />
                   <Route path="/reminders" element={<ReminderPage />} />
-                  <Route path="/bulty" element={<Bulty />} />
+                  <Route path="/bulty" element={<Bulty getWriteShopId={getWriteShopId} />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
-
-              {/* Legacy Page Rendering (Disabled but fixed for reference) */}
-              {false && (
-                <>
-                  {currentPage === 'dashboard' && user.role === 'admin' && <Dashboard products={productsWithTotalStock} sales={sales} purchases={purchases} />}
-                  {currentPage === 'inventory' && (
-                    <InventoryWrapper 
-                      products={productsWithTotalStock} 
-                      setProducts={setProducts} 
-                      purchases={purchases} setPurchases={setPurchases} 
-                      sales={sales} setSales={setSales} 
-                    />
-                  )}
-                  {currentPage === 'cash-flow' && user.role === 'admin' && (
-                    <CashFlowDashboard transactions={cashTransactions} setTransactions={setCashTransactions} />
-                  )}
-                </>
-              )}
             </div>
           </main>
         </div>
@@ -204,7 +229,9 @@ function App() {
     <Router>
       <AuthProvider>
         <ShopProvider>
-          <AppContent />
+          <InventoryProvider>
+            <AppContent />
+          </InventoryProvider>
         </ShopProvider>
       </AuthProvider>
     </Router>

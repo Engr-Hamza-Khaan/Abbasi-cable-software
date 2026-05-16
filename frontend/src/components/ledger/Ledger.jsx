@@ -2,13 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Plus, Eye, Download, ArrowLeft, Search, UserPlus, Phone } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useShop } from '../../context/ShopContext';
+import { fetchLedgerCustomers, upsertLedgerCustomer } from '../../services/api';
 
-const Ledger = ({ sales = [], transactions = [] }) => {
-  // metadataCustomers stores info like opening balance and phone numbers
-  const [metadataCustomers, setMetadataCustomers] = useState(() => {
-    const saved = localStorage.getItem('ledger-metadata-customers');
-    return saved ? JSON.parse(saved) : [];
-  });
+const Ledger = ({ sales = [], transactions = [], getWriteShopId }) => {
+  const { getShopQueryParams } = useShop();
+  const [metadataCustomers, setMetadataCustomers] = useState([]);
+  const [loadingMeta, setLoadingMeta] = useState(true);
 
   const [view, setView] = useState('list'); // 'list' | 'preview'
   const [selectedCustomerName, setSelectedCustomerName] = useState(null);
@@ -19,8 +19,18 @@ const Ledger = ({ sales = [], transactions = [] }) => {
   const [customerForm, setCustomerForm] = useState({ name: '', phone: '', openingBalance: 0, openingDate: new Date().toISOString().split('T')[0] });
 
   useEffect(() => {
-    localStorage.setItem('ledger-metadata-customers', JSON.stringify(metadataCustomers));
-  }, [metadataCustomers]);
+    const load = async () => {
+      try {
+        const data = await fetchLedgerCustomers(getShopQueryParams());
+        setMetadataCustomers(data);
+      } catch (err) {
+        console.error('Failed to load ledger customers', err);
+      } finally {
+        setLoadingMeta(false);
+      }
+    };
+    load();
+  }, [getShopQueryParams]);
 
   // Derive the list of all unique customers from sales, transactions, and metadata
   const allCustomers = useMemo(() => {
@@ -148,20 +158,41 @@ const Ledger = ({ sales = [], transactions = [] }) => {
     });
   };
 
-  const handleAddMetadata = (e) => {
+  const handleAddMetadata = async (e) => {
     e.preventDefault();
-    const existingIndex = metadataCustomers.findIndex(c => c.name.toUpperCase() === customerForm.name.toUpperCase());
-
-    if (existingIndex > -1) {
-      const updated = [...metadataCustomers];
-      updated[existingIndex] = { ...customerForm, name: customerForm.name.toUpperCase() };
-      setMetadataCustomers(updated);
-    } else {
-      setMetadataCustomers([...metadataCustomers, { ...customerForm, name: customerForm.name.toUpperCase() }]);
+    const shopId = getWriteShopId?.();
+    if (!shopId) {
+      alert('Please select a specific shop before saving customer metadata.');
+      return;
     }
 
-    setShowCustomerModal(false);
-    setCustomerForm({ name: '', phone: '', openingBalance: 0, openingDate: new Date().toISOString().split('T')[0] });
+    try {
+      const saved = await upsertLedgerCustomer(
+        {
+          name: customerForm.name.toUpperCase(),
+          phone: customerForm.phone,
+          openingBalance: customerForm.openingBalance,
+          openingDate: customerForm.openingDate,
+        },
+        shopId
+      );
+
+      const existingIndex = metadataCustomers.findIndex(
+        (c) => c.name.toUpperCase() === saved.name.toUpperCase()
+      );
+      if (existingIndex > -1) {
+        const updated = [...metadataCustomers];
+        updated[existingIndex] = saved;
+        setMetadataCustomers(updated);
+      } else {
+        setMetadataCustomers([...metadataCustomers, saved]);
+      }
+
+      setShowCustomerModal(false);
+      setCustomerForm({ name: '', phone: '', openingBalance: 0, openingDate: new Date().toISOString().split('T')[0] });
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to save customer');
+    }
   };
 
   const generatePDF = (customerName, entries, finalBalance, totalCredit, totalCash) => {

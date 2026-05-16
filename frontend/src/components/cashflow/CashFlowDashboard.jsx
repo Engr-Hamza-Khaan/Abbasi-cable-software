@@ -6,7 +6,9 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const CashFlowDashboard = ({ transactions, setTransactions }) => {
+import { createCashTransaction, deleteCashTransaction } from '../../services/api';
+
+const CashFlowDashboard = ({ transactions, setTransactions, getWriteShopId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,17 +139,35 @@ const CashFlowDashboard = ({ transactions, setTransactions }) => {
     doc.save(`CashFlow_Report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
-  const addManualTransaction = (newTx) => {
-    const transaction = {
-      id: Date.now(),
-      ...newTx,
-      source: 'manual',
-    };
-    setTransactions([...transactions, transaction]);
+  const addManualTransaction = async (newTx) => {
+    const shopId = getWriteShopId?.();
+    if (!shopId) {
+      alert('Please select a specific shop before adding transactions.');
+      return;
+    }
+    try {
+      const transaction = await createCashTransaction(
+        { ...newTx, source: 'manual' },
+        shopId
+      );
+      setTransactions([transaction, ...transactions]);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add transaction');
+    }
   };
 
-  const deleteTransaction = (id) => {
-    setTransactions(transactions.filter(t => t.id !== id));
+  const deleteTransaction = async (id) => {
+    const tx = transactions.find((t) => t.id === id);
+    if (tx?.source && tx.source !== 'manual') {
+      alert('Transactions linked to sales/purchases cannot be deleted here.');
+      return;
+    }
+    try {
+      await deleteCashTransaction(id);
+      setTransactions(transactions.filter((t) => t.id !== id));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete transaction');
+    }
   };
 
   return (

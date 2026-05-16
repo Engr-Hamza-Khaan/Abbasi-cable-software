@@ -5,7 +5,7 @@ import SalesModule from './SalesModule';
 import Reports from './Reports';
 import { Package, ShoppingCart, ShoppingBag, BarChart3 } from 'lucide-react';
 
-const InventoryWrapper = ({ products, setProducts, purchases, setPurchases, sales, setSales, setCashTransactions }) => {
+const InventoryWrapper = ({ products, setProducts, purchases, setPurchases, sales, setSales, setCashTransactions, getWriteShopId, refreshAll }) => {
   const [activeSubPage, setActiveSubPage] = useState('products');
 
   const tabs = [
@@ -41,13 +41,15 @@ const InventoryWrapper = ({ products, setProducts, purchases, setPurchases, sale
       {/* Dynamic Content Area */}
       <div className="transition-all duration-300">
         {activeSubPage === 'products' && (
-          <ProductManagement products={products} setProducts={setProducts} />
+          <ProductManagement products={products} setProducts={setProducts} getWriteShopId={getWriteShopId} refreshAll={refreshAll} />
         )}
         {activeSubPage === 'purchase' && (
           <PurchaseModule 
             products={products} setProducts={setProducts} 
             purchases={purchases} setPurchases={setPurchases} 
             setCashTransactions={setCashTransactions}
+            getWriteShopId={getWriteShopId}
+            refreshAll={refreshAll}
           />
         )}
         {activeSubPage === 'sales' && (
@@ -55,6 +57,8 @@ const InventoryWrapper = ({ products, setProducts, purchases, setPurchases, sale
             products={products} setProducts={setProducts} 
             sales={sales} setSales={setSales} 
             setCashTransactions={setCashTransactions}
+            getWriteShopId={getWriteShopId}
+            refreshAll={refreshAll}
           />
         )}
         {activeSubPage === 'reports' && (
