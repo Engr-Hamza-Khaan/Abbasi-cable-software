@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ShopStateProvider, useShopState } from './context/ShopStateContext';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -25,60 +26,17 @@ import ReminderPage from './components/reminders/ReminderPage';
 
 const AppContent = () => {
   const { user, logout } = useAuth();
+  const { 
+    products, setProducts, 
+    purchases, setPurchases, 
+    sales, setSales, 
+    cashTransactions, setCashTransactions, 
+    expenses, setExpenses 
+  } = useShopState();
+
   const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-
-  // Lifted Inventory State (Moved from original App.jsx)
-  const [products, setProducts] = useState(() => {
-    const item = window.localStorage.getItem('inventory-products');
-    if (item) {
-      const parsed = JSON.parse(item);
-      return parsed.map(p => ({
-        ...p,
-        variants: p.variants || [{ id: Date.now() + Math.random(), label: 'Default Batch', stock: p.stock || 0, unitPrice: 0 }],
-        stock: undefined
-      }));
-    }
-    return [
-      { id: 1, name: 'Copper Cable 2.5mm', unit: 'meter', minStock: 200, variants: [{ id: 'v1', label: 'Batch A - 100m', stock: 50, unitPrice: 120, date: '2025-03-20' }, { id: 'v2', label: 'Batch B - 150m', stock: 1200, unitPrice: 115, date: '2025-04-05' }] },
-      { id: 2, name: 'Copper Cable 4.0mm', unit: 'meter', minStock: 150, variants: [{ id: 'v3', label: 'Main Stock', stock: 840, unitPrice: 180, date: '2025-03-15' }] },
-      { id: 3, name: 'Armored Cable 10mm', unit: 'meter', minStock: 100, variants: [{ id: 'v4', label: 'Warehouse A', stock: 45, unitPrice: 850, date: '2025-04-01' }] },
-    ];
-  });
-
-  const productsWithTotalStock = products.map(p => ({
-    ...p,
-    stock: p.variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0)
-  }));
-
-  const [purchases, setPurchases] = useState(() => {
-    const item = window.localStorage.getItem('inventory-purchases');
-    return item ? JSON.parse(item) : [];
-  });
-
-  const [sales, setSales] = useState(() => {
-    const item = window.localStorage.getItem('inventory-sales');
-    return item ? JSON.parse(item) : [];
-  });
-
-  const [cashTransactions, setCashTransactions] = useState(() => {
-    const item = window.localStorage.getItem('cashTransactions');
-    return item ? JSON.parse(item) : [];
-  });
-
-  const [expenses, setExpenses] = useState(() => {
-    const item = window.localStorage.getItem('inventory-expenses');
-    return item ? JSON.parse(item) : [];
-  });
-
-  useEffect(() => {
-    window.localStorage.setItem('inventory-products', JSON.stringify(products));
-    window.localStorage.setItem('inventory-purchases', JSON.stringify(purchases));
-    window.localStorage.setItem('inventory-sales', JSON.stringify(sales));
-    window.localStorage.setItem('cashTransactions', JSON.stringify(cashTransactions));
-    window.localStorage.setItem('inventory-expenses', JSON.stringify(expenses));
-  }, [products, purchases, sales, cashTransactions, expenses]);
 
   useEffect(() => {
     if (theme === "dark") document.documentElement.classList.add("dark");
@@ -140,10 +98,10 @@ const AppContent = () => {
                 
                 {/* Protected Routes */}
                 <Route element={<PrivateRoute allowedRoles={['admin', 'user']} />}>
-                                    <Route path="/dashboard" element={user.role === 'admin' ? <Dashboard products={productsWithTotalStock} sales={sales} purchases={purchases} transactions={cashTransactions} expenses={expenses} /> : <Navigate to="/inventory" />} />
+                                    <Route path="/dashboard" element={user.role === 'admin' ? <Dashboard products={products} sales={sales} purchases={purchases} transactions={cashTransactions} expenses={expenses} /> : <Navigate to="/inventory" />} />
                   <Route path="/inventory" element={
                     <InventoryWrapper 
-                      products={productsWithTotalStock} 
+                      products={products} 
                       setProducts={setProducts} 
                       purchases={purchases} 
                       setPurchases={setPurchases} 
@@ -155,7 +113,7 @@ const AppContent = () => {
                   <Route path="/reports" element={<Reports purchases={purchases} sales={sales} />} />
                   <Route path="/attendance" element={<Attendance />} />
                   <Route path="/manufacturing" element={<Manufacturing />} />
-                  <Route path="/zakat" element={<Zakat products={productsWithTotalStock} />} />
+                  <Route path="/zakat" element={<Zakat products={products} />} />
                   <Route path="/expense-home" element={<ExpenseManager type="home" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
                   <Route path="/expense-shop" element={<ExpenseManager type="shop" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
                   <Route path="/expense-transport" element={<ExpenseManager type="transport" expenses={expenses} setExpenses={setExpenses} setCashTransactions={setCashTransactions} />} />
@@ -176,10 +134,10 @@ const AppContent = () => {
               {/* Legacy Page Rendering (Disabled but fixed for reference) */}
               {false && (
                 <>
-                  {currentPage === 'dashboard' && user.role === 'admin' && <Dashboard products={productsWithTotalStock} sales={sales} purchases={purchases} />}
+                  {currentPage === 'dashboard' && user.role === 'admin' && <Dashboard products={products} sales={sales} purchases={purchases} />}
                   {currentPage === 'inventory' && (
                     <InventoryWrapper 
-                      products={productsWithTotalStock} 
+                      products={products} 
                       setProducts={setProducts} 
                       purchases={purchases} setPurchases={setPurchases} 
                       sales={sales} setSales={setSales} 
@@ -202,7 +160,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <ShopStateProvider>
+          <AppContent />
+        </ShopStateProvider>
       </AuthProvider>
     </Router>
   );

@@ -1,17 +1,18 @@
 
 import {
   Menu,
-  Search,
-  Filter,
   Sun,
   Moon,
   Plus,
   Bell,
   Settings,
+  Store,
 } from "lucide-react";
 import profileImage from "../../assets/profilePic.jpg";
+import { useAuth } from "../../context/AuthContext";
 
-function Header({ sidebarCollapsed, onToggleSidebar, theme, toggleTheme, user }) {
+function Header({ sidebarCollapsed, onToggleSidebar, theme, toggleTheme }) {
+  const { user, shops, selectedShopId, setSelectedShopId } = useAuth();
   return (
     <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-4 md:px-6 py-3 md:py-4 sticky top-0 z-50">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -36,24 +37,27 @@ function Header({ sidebarCollapsed, onToggleSidebar, theme, toggleTheme, user })
           </div>
         </div>
 
-        {/* Center - Search Bar */}
-        <div className="w-full sm:w-auto flex-1 max-w-md order-last sm:order-none">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search anything..."
-              className="w-full pl-10 pr-10 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            <button className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-              <Filter className="w-4 h-4" />
-            </button>
-          </div>
+
+        {/* Shop Filter */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+          <Store className="w-4 h-4 text-blue-500" />
+          <select 
+            value={selectedShopId || ''} 
+            onChange={(e) => setSelectedShopId(e.target.value)}
+            disabled={user?.role !== 'admin'}
+            className="bg-transparent border-none text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-0 outline-none cursor-pointer disabled:cursor-not-allowed"
+          >
+            {shops.length === 0 && <option value="">Loading Shops...</option>}
+            {shops.map(shop => (
+              <option key={shop.id || shop._id} value={shop.id || shop._id}>
+                {shop.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Right Section */}
         <div className="flex items-center space-x-2 sm:space-x-3">
-          {/* Quick Action Button (Hidden on small screens) */}
           {/* <button className="hidden lg:flex items-center space-x-2 py-2 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow transition-all">
             <Plus className="w-4 h-4" />
             <span className="text-sm font-medium">New</span>

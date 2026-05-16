@@ -4,13 +4,20 @@ import {
   Trash2, Edit2, Calendar, Hash, User, 
   FileText, CreditCard, Calculator, MoreVertical
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { logActivity } from '../../utils/logger';
 
 const Bulty = () => {
   const [showModal, setShowModal] = useState(false);
-  const [bulties, setBulties] = useState(() => {
-    const saved = localStorage.getItem('bulty-records');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { selectedShopId } = useAuth();
+  const storageKey = `bulty-records-${selectedShopId || 'default'}`;
+
+  const [bulties, setBulties] = useState([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    setBulties(saved ? JSON.parse(saved) : []);
+  }, [storageKey]);
   
   const [formData, setFormData] = useState({
     agencyName: '',
@@ -34,8 +41,10 @@ const Bulty = () => {
 
   // Persist to localStorage
   useEffect(() => {
-    localStorage.setItem('bulty-records', JSON.stringify(bulties));
-  }, [bulties]);
+    if (selectedShopId) {
+      localStorage.setItem(storageKey, JSON.stringify(bulties));
+    }
+  }, [bulties, storageKey, selectedShopId]);
 
   // Calculations
   const calculateTotal = (weight, rate) => (parseFloat(weight) || 0) * (parseFloat(rate) || 0);
@@ -84,8 +93,10 @@ const Bulty = () => {
 
     if (editId) {
       setBulties(bulties.map(b => b.id === editId ? newRecord : b));
+      logActivity('UPDATE', 'Bulty', editId, { bultyNo: formData.bultyNo, agencyName: formData.agencyName });
     } else {
       setBulties([newRecord, ...bulties]);
+      logActivity('CREATE', 'Bulty', newRecord.id, { bultyNo: formData.bultyNo, agencyName: formData.agencyName });
     }
 
     resetForm();
@@ -120,7 +131,9 @@ const Bulty = () => {
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this bulty record?')) {
+      const recordToDelete = bulties.find(b => b.id === id);
       setBulties(bulties.filter(b => b.id !== id));
+      logActivity('DELETE', 'Bulty', id, { bultyNo: recordToDelete?.bultyNo });
     }
   };
 

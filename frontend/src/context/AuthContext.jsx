@@ -8,6 +8,28 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [shops, setShops] = useState([]);
+  const [selectedShopId, setSelectedShopId] = useState(null);
+
+  const fetchShops = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/shops');
+      setShops(response.data);
+      
+      // Auto-select first shop if none selected or stored shop is invalid
+      const storedShopId = localStorage.getItem('abbasi-cable-selected-shop');
+      const shopExists = response.data.some(s => (s.id || s._id).toString() === storedShopId);
+      
+      if ((!storedShopId || !shopExists) && response.data.length > 0) {
+        const firstShopId = (response.data[0].id || response.data[0]._id).toString();
+        setSelectedShopId(firstShopId);
+      } else if (storedShopId && shopExists) {
+        setSelectedShopId(storedShopId);
+      }
+    } catch (error) {
+      console.error('Error fetching shops:', error);
+    }
+  };
 
   useEffect(() => {
     // Check if user is logged in on mount
@@ -17,9 +39,21 @@ export const AuthProvider = ({ children }) => {
       setUser(parsedUser);
       // Set default auth header
       axios.defaults.headers.common['Authorization'] = `Bearer ${parsedUser.token}`;
+      
+      // Default selectedShopId to user's shopId if not set
+      const storedShopId = localStorage.getItem('abbasi-cable-selected-shop');
+      setSelectedShopId(storedShopId || (parsedUser.shopId ? parsedUser.shopId.toString() : null));
+      
+      fetchShops();
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (selectedShopId) {
+      localStorage.setItem('abbasi-cable-selected-shop', selectedShopId);
+    }
+  }, [selectedShopId]);
 
   const login = async (username, password) => {
     try {
@@ -30,6 +64,8 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data);
       localStorage.setItem('abbasi-cable-user', JSON.stringify(response.data));
       axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      setSelectedShopId(response.data.shopId ? response.data.shopId.toString() : null);
+      fetchShops();
       return { success: true };
     } catch (error) {
       return {
@@ -64,7 +100,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, shops, selectedShopId, setSelectedShopId }}>
       {!loading && children}
     </AuthContext.Provider>
   );

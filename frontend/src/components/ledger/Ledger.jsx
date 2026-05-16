@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Plus, Eye, Download, ArrowLeft, Search, UserPlus, Phone } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const Ledger = ({ sales = [], transactions = [] }) => {
+  const { selectedShopId } = useAuth();
+  const storageKey = `ledger-metadata-customers-${selectedShopId || 'default'}`;
+
   // metadataCustomers stores info like opening balance and phone numbers
-  const [metadataCustomers, setMetadataCustomers] = useState(() => {
-    const saved = localStorage.getItem('ledger-metadata-customers');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [metadataCustomers, setMetadataCustomers] = useState([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    setMetadataCustomers(saved ? JSON.parse(saved) : []);
+  }, [storageKey]);
 
   const [view, setView] = useState('list'); // 'list' | 'preview'
   const [selectedCustomerName, setSelectedCustomerName] = useState(null);
@@ -19,8 +25,10 @@ const Ledger = ({ sales = [], transactions = [] }) => {
   const [customerForm, setCustomerForm] = useState({ name: '', phone: '', openingBalance: 0, openingDate: new Date().toISOString().split('T')[0] });
 
   useEffect(() => {
-    localStorage.setItem('ledger-metadata-customers', JSON.stringify(metadataCustomers));
-  }, [metadataCustomers]);
+    if (selectedShopId) {
+      localStorage.setItem(storageKey, JSON.stringify(metadataCustomers));
+    }
+  }, [metadataCustomers, storageKey, selectedShopId]);
 
   // Derive the list of all unique customers from sales, transactions, and metadata
   const allCustomers = useMemo(() => {
