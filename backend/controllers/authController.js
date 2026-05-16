@@ -39,7 +39,7 @@ const registerUser = async (req, res) => {
       email,
       password,
       role: role || 'employee',
-      shopId: role === 'employee' ? shopId : (shopId || null),
+      shopId: role === 'employee' ? shopId : null,
     });
 
     if (user) {

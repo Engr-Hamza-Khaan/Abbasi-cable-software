@@ -45,7 +45,14 @@ const Signup = () => {
       return;
     }
 
-    const result = await signup(name, username, email, password, role, shopId);
+    const result = await signup(
+      name,
+      username,
+      email,
+      password,
+      role,
+      role === 'employee' ? shopId : null
+    );
     if (result.success) {
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => {
@@ -169,6 +176,7 @@ const Signup = () => {
               </div>
             </div>
 
+            {role === 'employee' && (
             <div className="space-y-1">
               <label className="text-sm font-semibold text-slate-300 ml-1">Select Shop</label>
               <div className="relative group">
@@ -198,6 +206,13 @@ const Signup = () => {
                 </p>
               )}
             </div>
+            )}
+
+            {role === 'admin' && (
+              <p className="text-[10px] text-slate-500 ml-1">
+                Admin accounts have access to all shops — no shop assignment needed.
+              </p>
+            )}
 
             {error && (
               <motion.div

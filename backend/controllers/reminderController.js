@@ -1,12 +1,13 @@
 const CustomerDue = require('../models/CustomerDue');
 const { sendSms } = require('../utils/smsSender');
+const { buildShopWhere } = require('../utils/shopQuery');
 
 // Get all customers dues
 exports.getAllCustomers = async (req, res) => {
   try {
     const customers = await CustomerDue.findAll({
-      where: { shopId: req.context.shopId },
-      order: [['dueDate', 'ASC']]
+      where: buildShopWhere(req.context),
+      order: [['dueDate', 'ASC']],
     });
     res.status(200).json({ success: true, data: customers });
   } catch (error) {
@@ -23,12 +24,17 @@ exports.addCustomer = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Please provide all required fields' });
     }
 
+    const shopId = req.context.shopId || req.body.shopId;
+    if (!shopId) {
+      return res.status(400).json({ success: false, error: 'Shop is required when viewing all shops' });
+    }
+
     const newCustomer = await CustomerDue.create({
       customerName,
       phoneNumber,
       dueAmount,
       dueDate,
-      shopId: req.context.shopId
+      shopId,
     });
 
     res.status(201).json({ success: true, data: newCustomer });
@@ -44,7 +50,7 @@ exports.updateCustomer = async (req, res) => {
     const { customerName, phoneNumber, dueAmount, dueDate, paymentStatus } = req.body;
 
     const customer = await CustomerDue.findOne({
-      where: { id, shopId: req.context.shopId }
+      where: buildShopWhere(req.context, { id }),
     });
     if (!customer) {
       return res.status(404).json({ success: false, error: 'Customer not found or access denied' });
@@ -73,7 +79,7 @@ exports.sendManualSms = async (req, res) => {
     console.log(`[Backend Debug] Controller received request to send SMS for ID: ${id}`);
     
     const customer = await CustomerDue.findOne({
-      where: { id, shopId: req.context.shopId }
+      where: buildShopWhere(req.context, { id }),
     });
     
     if (!customer) {

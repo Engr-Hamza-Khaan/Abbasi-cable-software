@@ -24,9 +24,8 @@ export const ShopProvider = ({ children }) => {
             const storedShopId = localStorage.getItem('abbasi-cable-selected-shop');
             if (storedShopId) {
               setSelectedShopId(storedShopId);
-            } else if (response.data.length > 0) {
-              setSelectedShopId(response.data[0].id);
-              localStorage.setItem('abbasi-cable-selected-shop', response.data[0].id);
+            } else {
+              setSelectedShopId('all');
             }
           } else {
             // Employee - always use their assigned shopId
@@ -51,8 +50,18 @@ export const ShopProvider = ({ children }) => {
   };
 
   const getSelectedShopName = () => {
+    if (selectedShopId === 'all') return 'All Shops';
     const shop = shops.find(s => s.id === selectedShopId);
     return shop ? shop.name : 'Unknown Shop';
+  };
+
+  const isViewingAllShops = user?.role === 'admin' && selectedShopId === 'all';
+
+  const getShopQueryParams = () => {
+    if (user?.role === 'admin' && selectedShopId && selectedShopId !== 'all') {
+      return { shopId: selectedShopId };
+    }
+    return {};
   };
 
   return (
@@ -61,7 +70,9 @@ export const ShopProvider = ({ children }) => {
       setSelectedShopId: switchShop, 
       shops, 
       loadingShops,
-      getSelectedShopName
+      getSelectedShopName,
+      isViewingAllShops,
+      getShopQueryParams,
     }}>
       {children}
     </ShopContext.Provider>

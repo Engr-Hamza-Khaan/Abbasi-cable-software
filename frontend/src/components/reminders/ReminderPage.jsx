@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { MessageSquare, Plus, Bell, CheckCircle, AlertCircle, Phone, Calendar, DollarSign, Send, RefreshCw } from 'lucide-react';
+import { MessageSquare, Plus, Bell, CheckCircle, AlertCircle, Phone, Calendar, DollarSign, Send, RefreshCw, Store } from 'lucide-react';
+import { useShop } from '../../context/ShopContext';
 
 const API_URL = 'http://localhost:5000/api/reminders/customers';
 
 const ReminderPage = () => {
+  const { selectedShopId, shops, isViewingAllShops, getShopQueryParams } = useShop();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -16,6 +18,7 @@ const ReminderPage = () => {
     phoneNumber: '',
     dueAmount: '',
     dueDate: '',
+    shopId: '',
   });
 
   const [error, setError] = useState('');
@@ -30,13 +33,21 @@ const ReminderPage = () => {
       }
     };
     fetchLedgerCustomers();
-    fetchDues();
   }, []);
+
+  useEffect(() => {
+    fetchDues();
+  }, [selectedShopId]);
+
+  const getShopName = (shopId) => {
+    const shop = shops.find((s) => s.id === shopId);
+    return shop ? shop.name : '—';
+  };
 
   const fetchDues = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(API_URL);
+      const response = await axios.get(API_URL, { params: getShopQueryParams() });
       if (response.data.success) {
         setCustomers(response.data.data);
       }
@@ -65,6 +76,7 @@ const ReminderPage = () => {
     if (!formData.phoneNumber || formData.phoneNumber.length < 10) return 'Valid phone number is required';
     if (!formData.dueAmount || isNaN(formData.dueAmount) || Number(formData.dueAmount) <= 0) return 'Valid amount is required';
     if (!formData.dueDate) return 'Due date is required';
+    if (isViewingAllShops && !formData.shopId) return 'Please select a shop';
     return null;
   };
 
@@ -78,11 +90,15 @@ const ReminderPage = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(API_URL, formData);
+      const payload = { ...formData };
+      if (!isViewingAllShops) {
+        delete payload.shopId;
+      }
+      const response = await axios.post(API_URL, payload, { params: getShopQueryParams() });
       if (response.data.success) {
         setSuccess('Reminder scheduled successfully!');
         setShowModal(false);
-        setFormData({ customerName: '', phoneNumber: '', dueAmount: '', dueDate: '' });
+        setFormData({ customerName: '', phoneNumber: '', dueAmount: '', dueDate: '', shopId: '' });
         fetchDues();
         setTimeout(() => setSuccess(''), 3000);
       }
@@ -106,7 +122,7 @@ const ReminderPage = () => {
     console.log(`[Frontend Debug] Attempting to send SMS for Customer ID: ${id}`);
     console.log(`[Frontend Debug] Request URL: ${API_URL}/${id}/send-sms`);
     try {
-      const response = await axios.post(`${API_URL}/${id}/send-sms`);
+      const response = await axios.post(`${API_URL}/${id}/send-sms`, null, { params: getShopQueryParams() });
       console.log(`[Frontend Debug] Success API Response:`, response.data);
       if (response.data.success) {
         setSuccess('SMS sent successfully!');
@@ -170,6 +186,9 @@ const ReminderPage = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                {isViewingAllShops && (
+                  <th className="p-4 font-black uppercase text-xs tracking-wider text-slate-500 dark:text-slate-400">Shop</th>
+                )}
                 <th className="p-4 font-black uppercase text-xs tracking-wider text-slate-500 dark:text-slate-400">Customer</th>
                 <th className="p-4 font-black uppercase text-xs tracking-wider text-slate-500 dark:text-slate-400">Contact</th>
                 <th className="p-4 font-black uppercase text-xs tracking-wider text-slate-500 dark:text-slate-400 text-right">Due Amount</th>
@@ -181,13 +200,21 @@ const ReminderPage = () => {
             <tbody>
               {customers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={isViewingAllShops ? 7 : 6} className="p-8 text-center text-slate-500 dark:text-slate-400">
                     No reminders found. Create one to get started.
                   </td>
                 </tr>
               ) : (
                 customers.map((c) => (
                   <tr key={c.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
+                    {isViewingAllShops && (
+                      <td className="p-4">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-lg">
+                          <Store className="w-3.5 h-3.5" />
+                          {getShopName(c.shopId)}
+                        </span>
+                      </td>
+                    )}
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 uppercase">{c.customerName}</td>
                     <td className="p-4 text-slate-600 dark:text-slate-400 font-medium">
                       <div className="flex items-center gap-2">
@@ -263,6 +290,24 @@ const ReminderPage = () => {
               {error && (
                 <div className="p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-sm font-semibold rounded-xl border border-rose-200 dark:border-rose-800">
                   {error}
+                </div>
+              )}
+
+              {isViewingAllShops && (
+                <div>
+                  <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Shop</label>
+                  <select
+                    name="shopId"
+                    value={formData.shopId}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white font-bold outline-none focus:border-blue-500 transition-all"
+                    required
+                  >
+                    <option value="">Select shop</option>
+                    {shops.map((shop) => (
+                      <option key={shop.id} value={shop.id}>{shop.name}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 
