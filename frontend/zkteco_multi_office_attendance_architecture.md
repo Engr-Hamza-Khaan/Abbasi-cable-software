@@ -4,7 +4,6 @@
 
 Build a scalable multi-office attendance management system using:
 
-- MERN Stack
 - ZKTeco iFace 800 biometric devices
 - Local office sync agents
 - Central cloud API
