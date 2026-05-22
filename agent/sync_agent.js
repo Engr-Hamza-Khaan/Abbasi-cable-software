@@ -4,7 +4,7 @@
  *
  * Env (optional): DEVICE_IP, DEVICE_PORT, API_URL, SHOP_ID, DEVICE_ID, DEBUG=1
  */
-
+require('./patchZkDecode');
 const ZKLib = require('node-zklib');
 const axios = require('axios');
 const cron = require('node-cron');
