@@ -10,8 +10,20 @@ async function ensureSaleInvoiceIdColumn() {
   `);
 }
 
-async function ensureSchema() {
-  await ensureSaleInvoiceIdColumn();
+async function ensureEmployeeShopIdColumn() {
+  await sequelize.query(`
+    ALTER TABLE "Employees"
+    ADD COLUMN IF NOT EXISTS "shopId" UUID;
+  `);
 }
 
-module.exports = { ensureSchema, ensureSaleInvoiceIdColumn };
+async function ensureSchema() {
+  await ensureSaleInvoiceIdColumn();
+  await ensureEmployeeShopIdColumn();
+}
+
+module.exports = {
+  ensureSchema,
+  ensureSaleInvoiceIdColumn,
+  ensureEmployeeShopIdColumn,
+};

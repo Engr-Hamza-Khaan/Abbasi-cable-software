@@ -12,6 +12,10 @@ const Employee = sequelize.define('Employee', {
     unique: true,
     allowNull: false,
   },
+  shopId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
   deviceUserId: {
     type: DataTypes.STRING,
     allowNull: true,

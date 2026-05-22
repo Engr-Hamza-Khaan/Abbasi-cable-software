@@ -25,6 +25,64 @@ function normalizeIncomingLog(log) {
   return { deviceUserId, timestamp, state };
 }
 
+function buildRawPayload(log, deviceUserId, state, timestamp) {
+  return {
+    id: deviceUserId,
+    state: log.state ?? state,
+    timestamp: log.timestamp ?? timestamp.toISOString(),
+    ...(log.verifyType != null ? { verifyType: log.verifyType } : {}),
+    employeeName: String(log.employeeName ?? '').trim(),
+  };
+}
+
+function isDuplicateError(error) {
+  return (
+    error.name === 'SequelizeUniqueConstraintError' ||
+    error.parent?.code === '23505'
+  );
+}
+
+async function ensureEmployeeForLog(shopId, deviceUserId, employeeName) {
+  const name = String(employeeName ?? '').trim();
+  let employee = await Employee.findOne({ where: { deviceUserId } });
+
+  if (!employee) {
+    return Employee.create({
+      shopId,
+      deviceUserId,
+      name: name || `User ${deviceUserId}`,
+      employeeCode: `ZK-${String(shopId).slice(0, 8)}-${deviceUserId}`,
+      status: 'active',
+    });
+  }
+
+  const updates = {};
+  if (name && employee.name !== name) updates.name = name;
+  if (!employee.shopId && shopId) updates.shopId = shopId;
+  if (Object.keys(updates).length) {
+    await employee.update(updates);
+  }
+
+  return employee;
+}
+
+async function loadLogForSocket(logId) {
+  return AttendanceLog.findByPk(logId, {
+    include: [
+      { model: Employee, attributes: ['name'] },
+      { model: AttendanceDevice, attributes: ['name'] },
+    ],
+  });
+}
+
+function emitAttendanceEvent(io, record) {
+  if (!io || !record) return;
+  const row = record.toJSON();
+  row.employeeName =
+    row.raw?.employeeName || row.Employee?.name || `Device ID: ${row.deviceUserId}`;
+  io.emit('attendance:new', row);
+}
+
 // @desc    Sync attendance logs from agent
 // @route   POST /api/attendance/sync
 // @access  Private (Agent)
@@ -48,23 +106,24 @@ exports.syncAttendance = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Device not found' });
     }
 
-    console.log('[attendance/sync] received', logs.length, 'log(s)');
-    if (logs[0]) {
-      console.log('[attendance/sync] first payload:', JSON.stringify(logs[0]));
-    }
-
+    const io = req.app.get('io');
     const savedLogs = [];
-    for (const log of logs) {
-      try {
-        const { deviceUserId, timestamp, state } = normalizeIncomingLog(log);
-        if (!deviceUserId || Number.isNaN(timestamp.getTime())) {
-          console.warn('[attendance/sync] skip invalid log', { deviceUserId, timestamp: log.timestamp });
-          continue;
-        }
+    let updatedDuplicates = 0;
 
-        const employee = await Employee.findOne({
-          where: { deviceUserId, shopId },
-        });
+    for (const log of logs) {
+      const { deviceUserId, timestamp, state } = normalizeIncomingLog(log);
+      if (!deviceUserId || Number.isNaN(timestamp.getTime())) {
+        continue;
+      }
+
+      const rawPayload = buildRawPayload(log, deviceUserId, state, timestamp);
+
+      try {
+        const employee = await ensureEmployeeForLog(
+          shopId,
+          deviceUserId,
+          rawPayload.employeeName
+        );
 
         const newLog = await AttendanceLog.create({
           shopId,
@@ -74,35 +133,40 @@ exports.syncAttendance = async (req, res) => {
           timestamp,
           state,
           type: STATE_MAPPING[state] || 'UNKNOWN',
-          raw: log,
+          raw: rawPayload,
           syncSource: 'agent',
         });
 
-        console.log('[attendance/sync] saved', {
-          deviceUserId,
-          employeeName: log.employeeName || '(empty)',
-        });
-
         savedLogs.push(newLog);
-
-        if (req.app.get('io')) {
-          req.app.get('io').emit('attendance:new', {
-            ...newLog.toJSON(),
-            employeeName: employeeName || (employee ? employee.name : `Device ID: ${deviceUserId}`),
-          });
-        }
+        const fullLog = await loadLogForSocket(newLog.id);
+        emitAttendanceEvent(io, fullLog);
       } catch (error) {
-        // Skip duplicates (unique constraint will throw error)
-        if (error.name !== 'SequelizeUniqueConstraintError') {
-          console.error('Error saving log:', error);
+        if (isDuplicateError(error)) {
+          if (rawPayload.employeeName) {
+            const existing = await AttendanceLog.findOne({
+              where: { deviceId, deviceUserId, timestamp },
+            });
+            if (existing) {
+              await existing.update({ raw: rawPayload });
+              updatedDuplicates++;
+            }
+          }
+          continue;
         }
-        console.error('[attendance/sync] Error saving log:', error.message, log);
+
+        console.error('[attendance/sync] save failed:', error.message, {
+          errors: error.errors?.map((e) => e.message),
+          deviceUserId,
+          timestamp: log.timestamp,
+        });
       }
     }
 
     await device.update({ lastSync: new Date(), status: 'online' });
 
-    console.log('[attendance/sync] done', { saved: savedLogs.length, total: logs.length });
+    if (io && (savedLogs.length > 0 || updatedDuplicates > 0)) {
+      io.emit('attendance:refresh', { shopId });
+    }
 
     res.status(200).json({
       success: true,

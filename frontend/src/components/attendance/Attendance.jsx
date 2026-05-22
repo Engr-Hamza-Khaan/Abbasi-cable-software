@@ -17,9 +17,9 @@ const Attendance = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const fetchAttendanceData = useCallback(async () => {
+  const fetchAttendanceData = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [logsRes, statsRes] = await Promise.all([
         axios.get(`http://localhost:5000/api/attendance/logs?shopId=${selectedShopId}&date=${selectedDate}`),
         axios.get(`http://localhost:5000/api/attendance/stats?shopId=${selectedShopId}`)
@@ -36,24 +36,41 @@ const Attendance = () => {
 
   useEffect(() => {
     fetchAttendanceData();
+  }, [fetchAttendanceData]);
 
-    // Listen for real-time updates
-    socket.on('attendance:new', (newLog) => {
-      // Only update if it belongs to current shop and date
-      if (newLog.shopId === selectedShopId) {
-        const logDate = new Date(newLog.timestamp).toISOString().split('T')[0];
-        if (logDate === selectedDate) {
-          setLogs(prev => [newLog, ...prev]);
+  useEffect(() => {
+    const onNewLog = (newLog) => {
+      if (String(newLog.shopId) !== String(selectedShopId)) return;
+      const logDate = new Date(newLog.timestamp).toISOString().split('T')[0];
+      if (logDate !== selectedDate) return;
+
+      setLogs((prev) => {
+        const key = newLog.id || `${newLog.deviceUserId}-${newLog.timestamp}`;
+        if (prev.some((l) => (l.id || `${l.deviceUserId}-${l.timestamp}`) === key)) {
+          return prev.map((l) =>
+            (l.id || `${l.deviceUserId}-${l.timestamp}`) === key ? { ...l, ...newLog } : l
+          );
         }
-        // Update stats (simple increment for demonstration)
-        if (newLog.state === 0) {
-          setStats(prev => ({ ...prev, presentToday: prev.presentToday + 1 }));
-        }
+        return [newLog, ...prev];
+      });
+
+      if (newLog.state === 0) {
+        setStats((prev) => ({ ...prev, presentToday: prev.presentToday + 1 }));
       }
-    });
+    };
+
+    const onRefresh = ({ shopId }) => {
+      if (String(shopId) === String(selectedShopId)) {
+        fetchAttendanceData(true);
+      }
+    };
+
+    socket.on('attendance:new', onNewLog);
+    socket.on('attendance:refresh', onRefresh);
 
     return () => {
-      socket.off('attendance:new');
+      socket.off('attendance:new', onNewLog);
+      socket.off('attendance:refresh', onRefresh);
     };
   }, [selectedShopId, selectedDate, fetchAttendanceData]);
 
