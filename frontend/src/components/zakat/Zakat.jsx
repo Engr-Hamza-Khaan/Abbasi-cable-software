@@ -37,7 +37,7 @@ const Zakat = ({ products = [] }) => {
         <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
           <Heart className="w-10 h-10" />
         </div>
-        <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Zakat Management</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">Zakat Management</h2>
         <p className="text-slate-500 dark:text-slate-400">Calculate and track your annual Zakat contributions based on inventory Hawl</p>
       </div>
 
@@ -95,7 +95,7 @@ const Zakat = ({ products = [] }) => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           <table className="w-full text-left">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">

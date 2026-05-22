@@ -92,7 +92,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Purchase Form */}
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
+      <div className="bg-white dark:bg-slate-800 card-padding rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
             <PlusCircle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -174,7 +174,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Length</label>
               <input
@@ -228,7 +228,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Purchase Date</label>
               <input
@@ -247,7 +247,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Payment Method</label>
               <select
@@ -275,7 +275,7 @@ const PurchaseModule = ({ products, setProducts, purchases, setPurchases, setCas
             </div>
           </div>
 
-          <div className={`grid gap-4 ${formData.paymentType === 'hybrid' ? 'grid-cols-2' : 'grid-cols-1'} animate-in fade-in slide-in-from-top-2 duration-300`}>
+          <div className={`grid gap-4 ${formData.paymentType === 'hybrid' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} animate-in fade-in slide-in-from-top-2 duration-300`}>
             {(formData.paymentType === 'cash' || formData.paymentType === 'hybrid') && (
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Cash Paid</label>

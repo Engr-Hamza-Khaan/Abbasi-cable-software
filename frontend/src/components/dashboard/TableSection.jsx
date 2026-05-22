@@ -75,7 +75,7 @@ function TableSection({ products = [], sales = [] }) {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                <div className="table-scroll">
                     <table className='w-full'>
                         <thead>
                             <tr>

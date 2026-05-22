@@ -148,7 +148,7 @@ const Signup = () => {
 
             <div className="space-y-1">
               <label className="text-sm font-semibold text-slate-300 ml-1">Assign Role</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setRole('admin')}

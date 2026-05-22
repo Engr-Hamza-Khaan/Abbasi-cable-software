@@ -105,19 +105,19 @@ const ExpenseManager = ({ type = 'general', expenses, setExpenses, setCashTransa
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center">
+      <div className="page-header">
         <div className="flex items-center space-x-4">
           <div className={`p-4 ${colors.iconBg} rounded-3xl shadow-sm`}>
             <config.icon className="w-8 h-8" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-white">{config.label}</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">{config.label}</h2>
             <p className="text-slate-500 dark:text-slate-400">Manage and track your {type} related costs</p>
           </div>
         </div>
         <button 
           onClick={() => setShowModal(true)}
-          className={`${colors.btn} text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2`}
+          className={`${colors.btn} btn-primary text-white shadow-lg`}
         >
           <Plus className="w-4 h-4" />
           Add Expense
@@ -155,7 +155,7 @@ const ExpenseManager = ({ type = 'general', expenses, setExpenses, setCashTransa
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           {filteredExpenses.length > 0 ? (
             <table className="w-full">
               <thead>
@@ -227,7 +227,7 @@ const ExpenseManager = ({ type = 'general', expenses, setExpenses, setCashTransa
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleAddExpense} className="p-8 space-y-6">
+            <form onSubmit={handleAddExpense} className="modal-body space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Description</label>
                 <input
@@ -240,7 +240,7 @@ const ExpenseManager = ({ type = 'general', expenses, setExpenses, setCashTransa
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Amount (RS)</label>
                   <input
@@ -266,7 +266,7 @@ const ExpenseManager = ({ type = 'general', expenses, setExpenses, setCashTransa
 
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Payment Method</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {['cash', 'online'].map((method) => (
                     <button
                       key={method}

@@ -515,7 +515,7 @@ const Reports = ({ purchases, sales }) => {
             </div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Purchase Value</p>
           </div>
-          <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">RS. {totalPurchaseValue.toLocaleString()}</p>
+          <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">RS. {totalPurchaseValue.toLocaleString()}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md">
@@ -525,7 +525,7 @@ const Reports = ({ purchases, sales }) => {
             </div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Length Issued</p>
           </div>
-          <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{totalSalesLength.toLocaleString()}</p>
+          <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{totalSalesLength.toLocaleString()}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md">
@@ -535,7 +535,7 @@ const Reports = ({ purchases, sales }) => {
             </div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Records Processed</p>
           </div>
-          <p className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{purchases.length + sales.length}</p>
+          <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{purchases.length + sales.length}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md">
@@ -545,13 +545,13 @@ const Reports = ({ purchases, sales }) => {
             </div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Current Month Avg</p>
           </div>
-          <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">RS. {(totalPurchaseValue / (purchases.length || 1)).toFixed(0)}</p>
+          <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">RS. {(totalPurchaseValue / (purchases.length || 1)).toFixed(0)}</p>
         </div>
       </div>
 
       {/* Tables and Filters */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
-        <div className="p-8 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+        <div className="card-padding border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="flex items-center space-x-4">
               <button
@@ -616,7 +616,7 @@ const Reports = ({ purchases, sales }) => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           {activeTab === 'purchases' ? (
             <table className="w-full text-left">
               <thead className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">

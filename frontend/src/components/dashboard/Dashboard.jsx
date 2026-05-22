@@ -25,13 +25,13 @@ function Dashboard({ products, sales, purchases, transactions, expenses = [] }) 
   return (
     <div className="space-y-6 ">
       {/* Date Filter Bar */}
-      <div className="flex justify-end">
-        <div className="flex items-center space-x-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-2.5 shadow-sm">
-          <div className="flex items-center space-x-2">
+      <div className="flex justify-stretch sm:justify-end">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 sm:px-5 py-3 sm:py-2.5 shadow-sm">
+          <div className="flex items-center space-x-2 shrink-0">
             <Calendar className="w-4 h-4 text-blue-500" />
             <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Date Range:</span>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input 
               type="date" 
               value={startDate}

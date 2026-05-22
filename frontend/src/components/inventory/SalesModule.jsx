@@ -824,7 +824,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
       {typeof document !== 'undefined' && createPortal(creditModal, document.body)}
 
       {/* Sales Form */}
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
+      <div className="bg-white dark:bg-slate-800 card-padding rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
         <motion.div
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
@@ -896,7 +896,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
                 </motion.div>
 
                 {lineItem.variantId && selectedVariant && (
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <motion.div
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -938,7 +938,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
               </>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Issue Length</label>
                 <input
@@ -1027,7 +1027,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
             </motion.div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Issue Date</label>
               <input
@@ -1055,7 +1055,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
-            className="grid grid-cols-2 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-6"
           >
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Payment Type</label>
@@ -1084,7 +1084,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
             </div>
           </motion.div>
 
-          <div className={`grid gap-4 ${order.paymentType === 'hybrid' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={`grid gap-4 ${order.paymentType === 'hybrid' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
             {(order.paymentType === 'cash' || order.paymentType === 'hybrid') && (
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Cash Amount</label>
@@ -1175,7 +1175,7 @@ const SalesModule = ({ products, setProducts, sales, setSales, setCashTransactio
 
       {/* Stock Summary Info */}
       <div className="space-y-6">
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-8 rounded-3xl text-white shadow-xl">
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 card-padding rounded-3xl text-white shadow-xl">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

@@ -171,7 +171,7 @@ const ProductManagement = ({ products, setProducts, getWriteShopId, refreshAll }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="page-header">
         <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Copper Cable Products</h2>
         <div className="flex space-x-3">
           <button
@@ -319,7 +319,7 @@ const ProductManagement = ({ products, setProducts, getWriteShopId, refreshAll }
                   <option value="feet">Feet (ft)</option>
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Color</label>
                   <select
@@ -386,7 +386,7 @@ const ProductManagement = ({ products, setProducts, getWriteShopId, refreshAll }
             </div>
 
             <div className="p-6">
-              <div className="overflow-x-auto">
+              <div className="table-scroll">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="text-sm font-semibold text-slate-500 border-b border-slate-100 dark:border-slate-700">

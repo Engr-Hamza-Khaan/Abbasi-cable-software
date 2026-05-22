@@ -178,8 +178,9 @@ const CashFlowDashboard = ({ transactions, setTransactions, getWriteShopId }) =>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor all income and expenses in real-time</p>
         </div>
         <button 
+          type="button"
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-lg hover:scale-[1.02] transition-all"
+          className="btn-primary bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-lg hover:scale-[1.02]"
         >
           <Plus className="w-5 h-5" />
           <span>Add Transaction</span>
@@ -258,8 +259,8 @@ const CashFlowDashboard = ({ transactions, setTransactions, getWriteShopId }) =>
           </div>
         </div>
 
-        {/* Today Card */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-700 dark:to-slate-800 rounded-2xl p-6 shadow-lg shadow-slate-200/50 dark:shadow-none transition-all">
+        {/* Today Card — first on mobile, last on md+ */}
+        <div className="order-first md:order-none bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-700 dark:to-slate-800 rounded-2xl p-6 shadow-lg shadow-slate-200/50 dark:shadow-none transition-all">
           <div className="flex items-center space-x-2 text-slate-300 mb-4">
             <CalendarIcon className="w-5 h-5 text-blue-400" />
             <span className="text-xs font-semibold uppercase tracking-wider">Today's Summary</span>

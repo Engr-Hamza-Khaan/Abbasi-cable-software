@@ -59,10 +59,12 @@ const employeeMenuItems = [
   { id: 'reports', icon: FileText, label: "Reports" },
 ];
 
-function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCount, user, onLogout }) {
+function Sidebar({ collapsed, mobileOpen, onMobileClose, currentPage, onPageChange, inventoryCount, user, onLogout }) {
   const navigate = useNavigate();
   const menuItems = user?.role === 'admin' ? adminMenuItems : employeeMenuItems;
   const [expandeditems, setExpandedItems] = useState(new Set(['user-management']));
+  const showLabels = mobileOpen || !collapsed;
+
   const toogleExpended = (itemid) => {
     const newExpended = new Set(expandeditems);
 
@@ -74,18 +76,30 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
     setExpandedItems(newExpended);
   };
 
+  const goTo = (id) => {
+    onPageChange(id);
+    navigate(`/${id}`);
+    onMobileClose?.();
+  };
+
   return (
-    <div className={`${collapsed ? 'w-20' : 'w-72'} transition-[width] duration-500 ease-in-out bg-white/80 dark:bg-slate-900/80
-    backdrop-blur-xl border-r border-slate-200/50 dark:border-slate-700/50 flex flex-col relative z-10`}>
+    <aside
+      className={`fixed lg:relative inset-y-0 left-0 z-40 flex flex-col h-full max-h-[100dvh] shrink-0
+        w-72 max-w-[min(18rem,88vw)] transition-[transform,width] duration-300 ease-in-out
+        ${collapsed ? 'lg:w-20' : 'lg:w-72'}
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        bg-white/95 dark:bg-slate-900/95 lg:bg-white/80 lg:dark:bg-slate-900/80
+        backdrop-blur-xl border-r border-slate-200/50 dark:border-slate-700/50 shadow-xl lg:shadow-none`}
+    >
       {/* Logo */}
-      <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50'>
+      <div className='p-4 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50'>
         <div className='flex items-center space-x-3'>
           <div className='w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg'>
             <Zap className='w-6 h-6 text-white' />
           </div>
 
           {/* Conditional Rendering */}
-          {!collapsed && (
+          {showLabels && (
             <div>
               <h1 className='text-xl font-bold text-slate-800 dark:text-white'>SBMS</h1>
               <p className='text-xs text-slate-500 dark:text-slate-400'>Admin Panel</p>
@@ -107,8 +121,7 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
                   if (item.submenu) {
                     toogleExpended(item.id);
                   } else {
-                    onPageChange(item.id);
-                    navigate(`/${item.id}`);
+                    goTo(item.id);
                   }
                 }}>
 
@@ -116,7 +129,7 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
                   <item.icon className={`w-5 h-5`} />
                   {/* Conditional Rendering */}
 
-                  {!collapsed && (
+                  {showLabels && (
                     <>
                       <span className='font-medium ml-2'>{item.label}</span>
 
@@ -141,21 +154,18 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
 
                 </div>
 
-                {!collapsed && item.submenu && (
+                {showLabels && item.submenu && (
                   <ChevronDown className='w-4 h-4 transition-transform' />
                 )}
               </button>
 
               {/* Sub Menu */}
-              {!collapsed && item.submenu && expandeditems.has(item.id) && (
+              {showLabels && item.submenu && expandeditems.has(item.id) && (
                 <div className='ml-8 mt-2 space-y-1'>
                   {item.submenu.map((subitem) => {
                     return <button 
                       key={subitem.id}
-                      onClick={() => {
-                        onPageChange(subitem.id);
-                        navigate(`/${subitem.id}`);
-                      }}
+                      onClick={() => goTo(subitem.id)}
                       className={`w-full text-left p-2 text-sm rounded-lg transition-all 
                         ${currentPage === subitem.id 
                           ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20 font-bold" 
@@ -174,8 +184,8 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
       </nav>
 
       {/* User profile */}
-      {!collapsed && (
-        <div className='p-4 border-t border-slate-200/50 dark:border-slate-700/50'>
+      {showLabels && (
+        <div className='p-4 border-t border-slate-200/50 dark:border-slate-700/50 safe-bottom'>
           <div className='flex items-center space-x-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50'>
             <div className='w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold ring-2 ring-blue-500'>
               {user?.name?.charAt(0) || 'U'}
@@ -200,7 +210,7 @@ function Sidebar({ collapsed, onToggle, currentPage, onPageChange, inventoryCoun
           </div>
         </div>
       )}
-    </div>
+    </aside>
   )
 }
 

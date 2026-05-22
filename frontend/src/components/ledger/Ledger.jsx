@@ -311,7 +311,7 @@ const Ledger = ({ sales = [], transactions = [], getWriteShopId }) => {
             </p>}
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="table-scroll">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-900 text-white print:bg-slate-200 print:text-black">
@@ -474,7 +474,7 @@ const Ledger = ({ sales = [], transactions = [], getWriteShopId }) => {
               <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Customer Metadata</h2>
               <button onClick={() => setShowCustomerModal(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all">✕</button>
             </div>
-            <form onSubmit={handleAddMetadata} className="p-8 space-y-5">
+            <form onSubmit={handleAddMetadata} className="modal-body space-y-5">
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Customer Name *</label>
                 <input
@@ -498,7 +498,7 @@ const Ledger = ({ sales = [], transactions = [], getWriteShopId }) => {
                   className="w-full mt-1 px-5 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white font-bold outline-none focus:border-blue-500 transition-all"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Opening Date</label>
                   <input

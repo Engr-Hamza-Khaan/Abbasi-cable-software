@@ -110,7 +110,7 @@ const Manufacturing = ({ getWriteShopId }) => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">
             Manufacturing <span className="text-indigo-600">Queue</span>
           </h2>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Manage multiple production records and images</p>

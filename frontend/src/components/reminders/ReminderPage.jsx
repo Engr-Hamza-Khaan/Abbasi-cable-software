@@ -132,7 +132,7 @@ const ReminderPage = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 dark:text-white flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white flex flex-wrap items-center gap-2 sm:gap-3">
             <div className="p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg">
               <MessageSquare className="w-6 h-6 text-white" />
             </div>
@@ -173,7 +173,7 @@ const ReminderPage = () => {
 
       {/* Main Content */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden transition-all">
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
@@ -304,7 +304,7 @@ const ReminderPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Due Amount</label>
                   <div className="relative">

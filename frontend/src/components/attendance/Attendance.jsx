@@ -71,21 +71,21 @@ const Attendance = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Attendance Management</h2>
-          <p className="text-slate-500 dark:text-slate-400">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">Attendance Management</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm truncate">
             {getSelectedShopName()}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <button 
             onClick={fetchAttendanceData}
             className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
           >
             <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/25 transition-all flex items-center gap-2">
+          <button type="button" className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 text-sm sm:text-base">
             <Cpu className="w-4 h-4" />
             Device Config
           </button>
@@ -130,7 +130,7 @@ const Attendance = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
               <tr>

@@ -15,7 +15,7 @@ const TransactionTable = ({ transactions, onDelete }) => {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="table-scroll">
       <table className="w-full">
         <thead>
           <tr className="bg-slate-50 dark:bg-slate-900/50">

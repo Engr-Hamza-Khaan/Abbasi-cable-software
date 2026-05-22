@@ -238,7 +238,7 @@ const Bulty = ({ getWriteShopId }) => {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           {loading ? (
             <div className="p-12 text-center text-slate-500">Loading bulty records...</div>
           ) : (

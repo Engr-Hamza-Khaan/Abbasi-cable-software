@@ -14,7 +14,7 @@ const Settings = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Settings</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">Settings</h2>
         <p className="text-slate-500 dark:text-slate-400">Manage your account and application preferences</p>
       </div>
 
@@ -41,7 +41,7 @@ const Settings = () => {
               <h3 className="text-xl font-bold text-slate-800 dark:text-white">General Configuration</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">Basic application behavior and branding</p>
             </div>
-            <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold transition-all">
+            <button type="button" className="btn-primary bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
               <Save className="w-4 h-4" />
               <span>Save Changes</span>
             </button>

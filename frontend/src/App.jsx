@@ -46,8 +46,19 @@ const AppContent = () => {
   } = useInventory();
 
   const [sideBarCollapsed, setSideBarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  const handleToggleSidebar = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setMobileMenuOpen((open) => !open);
+    } else {
+      setSideBarCollapsed((c) => !c);
+    }
+  };
 
   useEffect(() => {
     if (theme === 'dark') document.documentElement.classList.add('dark');
@@ -61,7 +72,16 @@ const AppContent = () => {
     const path = window.location.pathname.replace('/', '');
     if (path) setCurrentPage(path);
     else setCurrentPage('dashboard');
+    closeMobileMenu();
   }, [window.location.pathname]);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 1024) closeMobileMenu();
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   if (!user) {
     return (
@@ -76,11 +96,20 @@ const AppContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500">
-      <div className="flex h-screen overflow-hidden">
+    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500">
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-30 bg-slate-900/60 backdrop-blur-sm lg:hidden"
+          onClick={closeMobileMenu}
+        />
+      )}
+      <div className="flex h-screen h-[100dvh] overflow-hidden">
         <Sidebar
           collapsed={sideBarCollapsed}
-          onToggle={() => setSideBarCollapsed(!sideBarCollapsed)}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={closeMobileMenu}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           inventoryCount={products.length}
@@ -88,18 +117,19 @@ const AppContent = () => {
           onLogout={logout}
         />
 
-        <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
+        <div className="flex-1 flex flex-col min-w-0 w-full overflow-hidden transition-all duration-300 ease-in-out">
           <Header
             sidebarCollapsed={sideBarCollapsed}
-            onToggleSidebar={() => setSideBarCollapsed(!sideBarCollapsed)}
+            onToggleSidebar={handleToggleSidebar}
+            mobileMenuOpen={mobileMenuOpen}
             theme={theme}
             toggleTheme={toggleTheme}
             user={user}
             onLogout={logout}
           />
 
-          <main className="flex-1 overflow-y-auto bg-transparent">
-            <div className="p-6 space-y-6">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent safe-bottom">
+            <div className="page-content">
               {inventoryLoading && (
                 <div className="text-center py-4 text-slate-500">Loading data...</div>
               )}
