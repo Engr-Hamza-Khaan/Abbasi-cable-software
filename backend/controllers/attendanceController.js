@@ -1,4 +1,4 @@
-const { AttendanceLog, AttendanceDevice, Employee, Shop } = require('../models');
+const { AttendanceLog, AttendanceDevice, Employee } = require('../models');
 const { Op } = require('sequelize');
 
 // Map ZKTeco states to readable types
@@ -11,6 +11,20 @@ const STATE_MAPPING = {
   5: 'OT_OUT',
 };
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function normalizeIncomingLog(log) {
+  const deviceUserId = String(
+    log.deviceUserId ?? log.id ?? log.userId ?? log.userSn ?? ''
+  ).trim();
+  const time = log.recordTime ?? log.timestamp;
+  const timestamp = time instanceof Date ? time : new Date(time);
+  const state = log.state != null ? Number(log.state) : 0;
+
+  return { deviceUserId, timestamp, state };
+}
+
 // @desc    Sync attendance logs from agent
 // @route   POST /api/attendance/sync
 // @access  Private (Agent)
@@ -22,6 +36,13 @@ exports.syncAttendance = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid payload' });
     }
 
+    if (!UUID_RE.test(String(deviceId)) || !UUID_RE.test(String(shopId))) {
+      return res.status(400).json({
+        success: false,
+        message: 'shopId and deviceId must be valid UUIDs (use AttendanceDevice.id from the database)',
+      });
+    }
+
     const device = await AttendanceDevice.findByPk(deviceId);
     if (!device) {
       return res.status(404).json({ success: false, message: 'Device not found' });
@@ -30,21 +51,25 @@ exports.syncAttendance = async (req, res) => {
     const savedLogs = [];
     for (const log of logs) {
       try {
-        // Find employee by deviceUserId
-        const employee = await Employee.findOne({ 
-          where: { deviceUserId: log.id.toString(), shopId } 
+        const { deviceUserId, timestamp, state } = normalizeIncomingLog(log);
+        if (!deviceUserId || Number.isNaN(timestamp.getTime())) {
+          continue;
+        }
+
+        const employee = await Employee.findOne({
+          where: { deviceUserId, shopId },
         });
 
         const newLog = await AttendanceLog.create({
           shopId,
           deviceId,
           employeeId: employee ? employee.id : null,
-          deviceUserId: log.id.toString(),
-          timestamp: new Date(log.timestamp),
-          state: log.state,
-          type: STATE_MAPPING[log.state] || 'UNKNOWN',
+          deviceUserId,
+          timestamp,
+          state,
+          type: STATE_MAPPING[state] || 'UNKNOWN',
           raw: log,
-          syncSource: 'agent'
+          syncSource: 'agent',
         });
 
         savedLogs.push(newLog);
@@ -53,7 +78,7 @@ exports.syncAttendance = async (req, res) => {
         if (req.app.get('io')) {
           req.app.get('io').emit('attendance:new', {
             ...newLog.toJSON(),
-            employeeName: employee ? employee.name : `Device ID: ${log.id}`
+            employeeName: employee ? employee.name : `Device ID: ${deviceUserId}`,
           });
         }
       } catch (error) {
@@ -74,7 +99,10 @@ exports.syncAttendance = async (req, res) => {
     });
   } catch (error) {
     console.error('Sync Error:', error);
-    res.status(500).json({ success: false, message: 'Server Error' });
+    res.status(500).json({
+      success: false,
+      message: process.env.NODE_ENV === 'development' ? error.message : 'Server Error',
+    });
   }
 };
 
@@ -84,24 +112,33 @@ exports.syncAttendance = async (req, res) => {
 exports.deviceHeartbeat = async (req, res) => {
   try {
     const { deviceId, status } = req.body;
-    const device = await AttendanceDevice.findByPk(deviceId);
-    
-    if (device) {
-      await device.update({ 
-        status: status || 'online',
-        lastSync: new Date() 
+
+    if (!deviceId) {
+      return res.status(400).json({ success: false, message: 'deviceId is required' });
+    }
+    if (!UUID_RE.test(String(deviceId))) {
+      return res.status(400).json({
+        success: false,
+        message: 'deviceId must be a valid UUID',
       });
-      
-      // Update Shop status as well
-      await Shop.update(
-        { status: 'online', lastHeartbeat: new Date() },
-        { where: { id: device.shopId } }
-      );
+    }
+
+    const device = await AttendanceDevice.findByPk(deviceId);
+
+    if (device) {
+      await device.update({
+        status: status || 'online',
+        lastSync: new Date(),
+      });
     }
 
     res.status(200).json({ success: true });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server Error' });
+    console.error('Heartbeat Error:', error);
+    res.status(500).json({
+      success: false,
+      message: process.env.NODE_ENV === 'development' ? error.message : 'Server Error',
+    });
   }
 };
 
