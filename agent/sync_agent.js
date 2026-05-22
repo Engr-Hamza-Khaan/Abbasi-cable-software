@@ -4,6 +4,7 @@
  *
  * Env (optional): DEVICE_IP, DEVICE_PORT, API_URL, SHOP_ID, DEVICE_ID, DEBUG=1
  */
+
 const ZKLib = require('node-zklib');
 const axios = require('axios');
 const cron = require('node-cron');
@@ -23,7 +24,6 @@ const CONFIG = {
 };
 
 let zkInstance = null;
-let loggedSampleRaw = false;
 
 function log(...args) {
   console.log(new Date().toISOString(), ...args);
@@ -31,6 +31,21 @@ function log(...args) {
 
 function logDebug(...args) {
   if (CONFIG.DEBUG) log('[debug]', ...args);
+}
+
+/** Print full raw payload from ZKTeco device to console */
+function printRawDeviceData(result, rawLogs) {
+  console.log('\n========== Device Raw Data ==========');
+  if (result?.err) {
+    console.log('Device err:', result.err);
+  }
+  console.log('Count:', rawLogs.length);
+  if (rawLogs.length) {
+    console.log(JSON.stringify(rawLogs, null, 2));
+  } else {
+    console.log('(no logs on device)');
+  }
+  console.log('=====================================\n');
 }
 
 function logApiError(label, err) {
@@ -75,11 +90,13 @@ function normalizeZkLog(raw) {
   const time = raw.recordTime ?? raw.timestamp;
   const parsedTime = time instanceof Date ? time : new Date(time);
   const state = raw.state != null ? Number(raw.state) : 0;
+  const verifyType = raw.verifyType != null ? Number(raw.verifyType) : null;
 
   return {
     id: deviceUserId,
     timestamp: parsedTime.toISOString(),
     state: Number.isFinite(state) ? state : 0,
+    ...(verifyType != null && Number.isFinite(verifyType) ? { verifyType } : {}),
   };
 }
 
@@ -112,14 +129,11 @@ async function syncLogs() {
     const result = await zkInstance.getAttendances();
     const rawLogs = result?.data || [];
 
+    printRawDeviceData(result, rawLogs);
+
     if (!rawLogs.length) {
       logDebug('No attendance logs on device');
       return;
-    }
-
-    if (!loggedSampleRaw) {
-      logDebug('Sample raw log from device:', JSON.stringify(rawLogs[0], null, 2));
-      loggedSampleRaw = true;
     }
 
     const logs = rawLogs

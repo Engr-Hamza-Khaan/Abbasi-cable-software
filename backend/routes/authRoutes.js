@@ -8,11 +8,10 @@ const {
   resetPassword,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
-const activityLogger = require('../middleware/activityLogger');
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.get('/me', protect, activityLogger, getMe);
+router.get('/me', protect, getMe);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resettoken', resetPassword);
 

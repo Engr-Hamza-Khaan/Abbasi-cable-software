@@ -4,8 +4,6 @@ const Shop = require('../models/Shop');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const { Op } = require('sequelize');
-const { logActivity } = require('../utils/logActivity');
-
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public (Allowed initially for creating admin)
@@ -44,21 +42,6 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
-      await logActivity({
-        userId: user.id,
-        userRole: user.role,
-        shopId: user.shopId,
-        action: 'USER_REGISTERED',
-        description: `New ${user.role} account registered: ${user.username}`,
-        entityType: 'User',
-        entityId: user.id,
-        method: 'POST',
-        path: '/api/auth/register',
-        metadata: { name: user.name, username: user.username, role: user.role },
-        ipAddress: req.ip,
-        statusCode: 201,
-      });
-
       res.status(201).json({
         message: 'User registered successfully. Please login.',
         id: user.id,
@@ -86,21 +69,6 @@ const loginUser = async (req, res) => {
     const user = await User.scope('withPassword').findOne({ where: { username } });
 
     if (user && (await user.matchPassword(password))) {
-      await logActivity({
-        userId: user.id,
-        userRole: user.role,
-        shopId: user.shopId,
-        action: 'USER_LOGIN',
-        description: `${user.name} logged in`,
-        entityType: 'User',
-        entityId: user.id,
-        method: 'POST',
-        path: '/api/auth/login',
-        metadata: { username: user.username },
-        ipAddress: req.ip,
-        statusCode: 200,
-      });
-
       res.json({
         id: user.id,
         name: user.name,

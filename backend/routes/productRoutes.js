@@ -2,10 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const { resolveShop } = require('../middleware/shopMiddleware');
-const activityLogger = require('../middleware/activityLogger');
 const productController = require('../controllers/productController');
 
-router.use(protect, resolveShop, activityLogger);
+router.use(protect, resolveShop);
 
 router.get('/', productController.getProducts);
 router.post('/', productController.createProduct);
