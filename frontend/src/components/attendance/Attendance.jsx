@@ -57,9 +57,12 @@ const Attendance = () => {
     };
   }, [selectedShopId, selectedDate, fetchAttendanceData]);
 
-  const filteredLogs = logs.filter(log => 
-    (log.Employee?.name || `ID: ${log.deviceUserId}`).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (log.Employee?.designation || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const getEmployeeName = (log) =>
+    log.raw?.employeeName || log.employeeName || log.Employee?.name || '-';
+
+  const filteredLogs = logs.filter((log) =>
+    getEmployeeName(log).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(log.deviceUserId || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const dashboardStats = [
@@ -134,8 +137,8 @@ const Attendance = () => {
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-4">Employee</th>
-                <th className="px-6 py-4">Designation</th>
+                <th className="px-6 py-4">Device ID</th>
+                <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Check In</th>
                 <th className="px-6 py-4">Device</th>
@@ -145,11 +148,11 @@ const Attendance = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {filteredLogs.length > 0 ? filteredLogs.map((log, i) => (
                 <tr key={log.id || i} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
-                  <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">
-                    {log.Employee?.name || `ZKTeco User: ${log.deviceUserId}`}
-                  </td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                    {log.Employee?.designation || '-'}
+                    {log.deviceUserId}
+                  </td>
+                  <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">
+                    {getEmployeeName(log)}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${

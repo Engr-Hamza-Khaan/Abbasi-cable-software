@@ -33,6 +33,23 @@ function logDebug(...args) {
   if (CONFIG.DEBUG) log('[debug]', ...args);
 }
 
+/** deviceUserId → name from device user list */
+function buildNameMap(users) {
+  const map = {};
+  for (const u of users) {
+    const id = String(u.userId ?? u.deviceUserId ?? u.uid ?? '').trim();
+    if (id) map[id] = String(u.name ?? '').trim();
+  }
+  return map;
+}
+
+function attachEmployeeNames(rawLogs, nameMap) {
+  return rawLogs.map((log) => {
+    const id = String(log.deviceUserId ?? log.userId ?? log.id ?? log.userSn ?? '').trim();
+    return { ...log, employeeName: nameMap[id] || '' };
+  });
+}
+
 /** Print full raw payload from ZKTeco device to console */
 function printRawDeviceData(result, rawLogs) {
   console.log('\n========== Device Raw Data ==========');
@@ -96,6 +113,7 @@ function normalizeZkLog(raw) {
     id: deviceUserId,
     timestamp: parsedTime.toISOString(),
     state: Number.isFinite(state) ? state : 0,
+    employeeName: raw.employeeName || '',
     ...(verifyType != null && Number.isFinite(verifyType) ? { verifyType } : {}),
   };
 }
@@ -126,8 +144,11 @@ async function syncLogs() {
   }
 
   try {
+    const usersResult = await zkInstance.getUsers();
+    const nameMap = buildNameMap(usersResult?.data || []);
+
     const result = await zkInstance.getAttendances();
-    const rawLogs = result?.data || [];
+    const rawLogs = attachEmployeeNames(result?.data || [], nameMap);
 
     printRawDeviceData(result, rawLogs);
 
@@ -145,6 +166,8 @@ async function syncLogs() {
 
     log(`Found ${rawLogs.length} log(s), sending ${logs.length} to API...`);
     logDebug('Normalized sample:', logs[0]);
+    const emptyNames = logs.filter((l) => !l.employeeName).length;
+    if (emptyNames) logDebug(`${emptyNames} log(s) have no employeeName before API send`);
 
     const response = await axios.post(
       `${CONFIG.API_URL}/sync`,

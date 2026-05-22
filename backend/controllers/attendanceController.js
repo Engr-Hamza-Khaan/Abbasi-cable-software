@@ -48,11 +48,17 @@ exports.syncAttendance = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Device not found' });
     }
 
+    console.log('[attendance/sync] received', logs.length, 'log(s)');
+    if (logs[0]) {
+      console.log('[attendance/sync] first payload:', JSON.stringify(logs[0]));
+    }
+
     const savedLogs = [];
     for (const log of logs) {
       try {
         const { deviceUserId, timestamp, state } = normalizeIncomingLog(log);
         if (!deviceUserId || Number.isNaN(timestamp.getTime())) {
+          console.warn('[attendance/sync] skip invalid log', { deviceUserId, timestamp: log.timestamp });
           continue;
         }
 
@@ -72,13 +78,17 @@ exports.syncAttendance = async (req, res) => {
           syncSource: 'agent',
         });
 
+        console.log('[attendance/sync] saved', {
+          deviceUserId,
+          employeeName: log.employeeName || '(empty)',
+        });
+
         savedLogs.push(newLog);
 
-        // Emit socket event for real-time dashboard
         if (req.app.get('io')) {
           req.app.get('io').emit('attendance:new', {
             ...newLog.toJSON(),
-            employeeName: employee ? employee.name : `Device ID: ${deviceUserId}`,
+            employeeName: employeeName || (employee ? employee.name : `Device ID: ${deviceUserId}`),
           });
         }
       } catch (error) {
@@ -86,11 +96,13 @@ exports.syncAttendance = async (req, res) => {
         if (error.name !== 'SequelizeUniqueConstraintError') {
           console.error('Error saving log:', error);
         }
+        console.error('[attendance/sync] Error saving log:', error.message, log);
       }
     }
 
-    // Update last sync for device
     await device.update({ lastSync: new Date(), status: 'online' });
+
+    console.log('[attendance/sync] done', { saved: savedLogs.length, total: logs.length });
 
     res.status(200).json({
       success: true,
