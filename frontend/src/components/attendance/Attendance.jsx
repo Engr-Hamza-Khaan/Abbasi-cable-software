@@ -1,12 +1,72 @@
-import React from 'react';
-import { Calendar, UserCheck, UserX, Clock, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar, UserCheck, UserX, Clock, Search, RefreshCw, Cpu, Wifi, WifiOff } from 'lucide-react';
+import axios from 'axios';
+import { useShop } from '../../context/ShopContext';
+import socket from '../../utils/socket';
 
 const Attendance = () => {
-  const stats = [
-    { label: 'Total Staff', value: '45', icon: UserCheck, color: 'blue' },
-    { label: 'Present Today', value: '38', icon: Calendar, color: 'emerald' },
-    { label: 'On Leave', value: '4', icon: UserX, color: 'amber' },
-    { label: 'Late Arrival', value: '3', icon: Clock, color: 'rose' },
+  const { selectedShopId, shops, getSelectedShopName } = useShop();
+  const [logs, setLogs] = useState([]);
+  const [stats, setStats] = useState({
+    totalStaff: 0,
+    presentToday: 0,
+    onLeave: 0,
+    lateArrival: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const fetchAttendanceData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [logsRes, statsRes] = await Promise.all([
+        axios.get(`http://localhost:5000/api/attendance/logs?shopId=${selectedShopId}&date=${selectedDate}`),
+        axios.get(`http://localhost:5000/api/attendance/stats?shopId=${selectedShopId}`)
+      ]);
+
+      if (logsRes.data.success) setLogs(logsRes.data.data);
+      if (statsRes.data.success) setStats(statsRes.data.data);
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedShopId, selectedDate]);
+
+  useEffect(() => {
+    fetchAttendanceData();
+
+    // Listen for real-time updates
+    socket.on('attendance:new', (newLog) => {
+      // Only update if it belongs to current shop and date
+      if (newLog.shopId === selectedShopId) {
+        const logDate = new Date(newLog.timestamp).toISOString().split('T')[0];
+        if (logDate === selectedDate) {
+          setLogs(prev => [newLog, ...prev]);
+        }
+        // Update stats (simple increment for demonstration)
+        if (newLog.state === 0) {
+          setStats(prev => ({ ...prev, presentToday: prev.presentToday + 1 }));
+        }
+      }
+    });
+
+    return () => {
+      socket.off('attendance:new');
+    };
+  }, [selectedShopId, selectedDate, fetchAttendanceData]);
+
+  const filteredLogs = logs.filter(log => 
+    (log.Employee?.name || `ID: ${log.deviceUserId}`).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (log.Employee?.designation || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const dashboardStats = [
+    { label: 'Total Staff', value: stats.totalStaff, icon: UserCheck, color: 'blue' },
+    { label: 'Present Today', value: stats.presentToday, icon: Calendar, color: 'emerald' },
+    { label: 'On Leave', value: stats.onLeave, icon: UserX, color: 'amber' },
+    { label: 'Late Arrival', value: stats.lateArrival, icon: Clock, color: 'rose' },
   ];
 
   return (
@@ -14,15 +74,26 @@ const Attendance = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Attendance Management</h2>
-          <p className="text-slate-500 dark:text-slate-400">Monitor and manage staff attendance records</p>
+          <p className="text-slate-500 dark:text-slate-400">
+            {getSelectedShopName()}
+          </p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/25 transition-all">
-          Mark Attendance
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={fetchAttendanceData}
+            className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/25 transition-all flex items-center gap-2">
+            <Cpu className="w-4 h-4" />
+            Device Config
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
+        {dashboardStats.map((stat, i) => (
           <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-center space-x-4">
               <div className={`p-3 rounded-2xl bg-${stat.color}-100 dark:bg-${stat.color}-900/30 text-${stat.color}-600 dark:text-${stat.color}-400`}>
@@ -43,12 +114,19 @@ const Attendance = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search staff..."
               className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all dark:text-white"
             />
           </div>
           <div className="flex items-center gap-3">
-            <input type="date" className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm outline-none dark:text-white" defaultValue={new Date().toISOString().split('T')[0]} />
+            <input 
+              type="date" 
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm outline-none dark:text-white" 
+            />
           </div>
         </div>
 
@@ -60,32 +138,45 @@ const Attendance = () => {
                 <th className="px-6 py-4">Designation</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Check In</th>
-                <th className="px-6 py-4">Check Out</th>
+                <th className="px-6 py-4">Device</th>
+                <th className="px-6 py-4">Time</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {[
-                { name: 'Hamza Khan', role: 'Administrator', status: 'Present', in: '09:00 AM', out: '06:00 PM' },
-                { name: 'Ahmed Ali', role: 'Sales Manager', status: 'Late', in: '09:45 AM', out: '-' },
-                { name: 'Sara Smith', role: 'Inventory Specialist', status: 'Present', in: '08:55 AM', out: '05:30 PM' },
-                { name: 'John Doe', role: 'Accountant', status: 'On Leave', in: '-', out: '-' },
-              ].map((row, i) => (
-                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
-                  <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">{row.name}</td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{row.role}</td>
+              {filteredLogs.length > 0 ? filteredLogs.map((log, i) => (
+                <tr key={log.id || i} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
+                  <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">
+                    {log.Employee?.name || `ZKTeco User: ${log.deviceUserId}`}
+                  </td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                    {log.Employee?.designation || '-'}
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      row.status === 'Present' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                      row.status === 'Late' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
-                      'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                      log.type === 'IN' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                      log.type === 'OUT' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' :
+                      'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
                     }`}>
-                      {row.status}
+                      {log.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{row.in}</td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{row.out}</td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                    {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                    {log.AttendanceDevice?.name || 'Device'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                    {new Date(log.timestamp).toLocaleDateString()}
+                  </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                    {loading ? 'Loading logs...' : 'No attendance records found for this date.'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

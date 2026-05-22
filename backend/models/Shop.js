@@ -16,9 +16,11 @@ const Shop = sequelize.define('Shop', {
   },
   location: {
     type: DataTypes.STRING,
+    allowNull: true,
   },
   phone: {
     type: DataTypes.STRING,
+    allowNull: true,
   },
   isActive: {
     type: DataTypes.BOOLEAN,

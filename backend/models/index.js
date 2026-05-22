@@ -13,6 +13,9 @@ const LedgerCustomer = require('./LedgerCustomer');
 const BultyRecord = require('./BultyRecord');
 const ManufacturingImage = require('./ManufacturingImage');
 const ActivityLog = require('./ActivityLog');
+const Employee = require('./Employee');
+const AttendanceDevice = require('./AttendanceDevice');
+const AttendanceLog = require('./AttendanceLog');
 
 Product.hasMany(ProductVariant, { foreignKey: 'productId', as: 'variants', onDelete: 'CASCADE' });
 ProductVariant.belongsTo(Product, { foreignKey: 'productId' });
@@ -20,10 +23,28 @@ ProductVariant.belongsTo(Product, { foreignKey: 'productId' });
 Shop.hasMany(Product, { foreignKey: 'shopId' });
 Product.belongsTo(Shop, { foreignKey: 'shopId' });
 
+Shop.hasMany(User, { foreignKey: 'shopId' });
+User.belongsTo(Shop, { foreignKey: 'shopId' });
+
 User.hasMany(ActivityLog, { foreignKey: 'userId' });
 ActivityLog.belongsTo(User, { foreignKey: 'userId' });
 Shop.hasMany(ActivityLog, { foreignKey: 'shopId' });
 ActivityLog.belongsTo(Shop, { foreignKey: 'shopId' });
+
+Shop.hasMany(AttendanceDevice, { foreignKey: 'shopId' });
+AttendanceDevice.belongsTo(Shop, { foreignKey: 'shopId' });
+
+Shop.hasMany(AttendanceLog, { foreignKey: 'shopId' });
+AttendanceLog.belongsTo(Shop, { foreignKey: 'shopId' });
+
+AttendanceDevice.hasMany(AttendanceLog, { foreignKey: 'deviceId' });
+AttendanceLog.belongsTo(AttendanceDevice, { foreignKey: 'deviceId' });
+
+Employee.hasMany(AttendanceLog, { foreignKey: 'employeeId' });
+AttendanceLog.belongsTo(Employee, { foreignKey: 'employeeId' });
+
+Employee.belongsTo(Shop, { foreignKey: 'shopId' });
+Shop.hasMany(Employee, { foreignKey: 'shopId' });
 
 module.exports = {
   sequelize,
@@ -41,4 +62,7 @@ module.exports = {
   BultyRecord,
   ManufacturingImage,
   ActivityLog,
+  Employee,
+  AttendanceDevice,
+  AttendanceLog,
 };

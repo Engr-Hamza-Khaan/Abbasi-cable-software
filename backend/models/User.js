@@ -67,6 +67,10 @@ const User = sequelize.define('User', {
       key: 'id',
     },
   },
+  shopId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
   resetPasswordToken: {
     type: DataTypes.STRING,
   },

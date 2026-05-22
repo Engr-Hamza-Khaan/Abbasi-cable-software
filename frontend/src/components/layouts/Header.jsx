@@ -1,14 +1,13 @@
 
 import {
   Menu,
-  Search,
-  Filter,
   Sun,
   Moon,
   Plus,
   Bell,
   Settings,
   Store,
+  Filter,
 } from "lucide-react";
 import profileImage from "../../assets/profilePic.jpg";
 import { useShop } from "../../context/ShopContext";
@@ -74,12 +73,6 @@ function Header({ sidebarCollapsed, onToggleSidebar, theme, toggleTheme, user })
 
         {/* Right Section */}
         <div className="flex items-center space-x-2 sm:space-x-3">
-          {/* Quick Action Button (Hidden on small screens) */}
-          {/* <button className="hidden lg:flex items-center space-x-2 py-2 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow transition-all">
-            <Plus className="w-4 h-4" />
-            <span className="text-sm font-medium">New</span>
-          </button> */}
-
           {/* Theme Toggle */}
           <button className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={toggleTheme}>
             {theme === 'light' ? (<Sun className="w-5 h-5" />) : (<Moon className="w-5 h-5" />)}
@@ -107,10 +100,10 @@ function Header({ sidebarCollapsed, onToggleSidebar, theme, toggleTheme, user })
             />
             <div className="hidden md:block">
               <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                Hamza Khan
+                {user?.name || 'User'}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Administrator
+                {user?.role === 'admin' ? 'Administrator' : 'Employee'}
               </p>
             </div>
           </div>
