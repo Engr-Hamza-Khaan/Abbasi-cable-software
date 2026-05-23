@@ -56,20 +56,16 @@ const User = sequelize.define('User', {
     },
   },
   role: {
-    type: DataTypes.ENUM('admin', 'employee'),
+    type: DataTypes.ENUM('super-admin', 'admin', 'employee'),
     defaultValue: 'employee',
   },
   shopId: {
     type: DataTypes.UUID,
-    allowNull: true, // Null for admin
+    allowNull: true,
     references: {
       model: 'Shops',
       key: 'id',
     },
-  },
-  shopId: {
-    type: DataTypes.UUID,
-    allowNull: true,
   },
   resetPasswordToken: {
     type: DataTypes.STRING,

@@ -6,12 +6,12 @@ const {
   getShopById,
   updateShop,
 } = require('../controllers/shopController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Public: signup shop selection
 router.get('/', getShops);
 
-router.post('/', protect, createShop);
+router.post('/', protect, authorize('super-admin'), createShop);
 
 router.route('/:id')
   .get(protect, getShopById)

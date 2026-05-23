@@ -21,6 +21,10 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
+    if (role === 'super-admin') {
+      return res.status(403).json({ message: 'Super admin accounts cannot be created via registration' });
+    }
+
     if (role === 'employee' && !shopId) {
       return res.status(400).json({ message: 'Shop is required for employee' });
     }

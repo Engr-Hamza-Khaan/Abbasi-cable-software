@@ -20,6 +20,7 @@ const activityRoutes = require('./routes/activityRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 const { ensureSchema } = require('./utils/ensureSchema');
+const { seedSuperAdmin } = require('./utils/seedSuperAdmin');
 const activityLogger = require('./middleware/activityLogger');
 
 require('./cron/reminderCron'); // Start cron jobs
@@ -74,6 +75,7 @@ sequelize
     return sequelize.sync();
   })
   .then(() => ensureSchema())
+  .then(() => seedSuperAdmin())
   .then(() => console.log('Database Synchronized'))
   .catch((err) => console.log('PostgreSQL Connection Error:', err));
 

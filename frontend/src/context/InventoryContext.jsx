@@ -11,7 +11,13 @@ import {
 
 const InventoryContext = createContext();
 
-export const useInventory = () => useContext(InventoryContext);
+export const useInventory = () => {
+  const context = useContext(InventoryContext);
+  if (!context) {
+    throw new Error('useInventory must be used within InventoryProvider');
+  }
+  return context;
+};
 
 export const InventoryProvider = ({ children }) => {
   const { user } = useAuth();
@@ -31,7 +37,7 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const refreshAll = useCallback(async () => {
-    if (!user) return;
+    if (!user || user.role === 'super-admin') return;
     setLoading(true);
     setError(null);
     try {

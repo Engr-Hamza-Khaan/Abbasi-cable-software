@@ -17,13 +17,25 @@ async function ensureEmployeeShopIdColumn() {
   `);
 }
 
+async function ensureUserRoleEnum() {
+  await sequelize.query(`
+    DO $$ BEGIN
+      ALTER TYPE "enum_Users_role" ADD VALUE IF NOT EXISTS 'super-admin';
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END $$;
+  `);
+}
+
 async function ensureSchema() {
   await ensureSaleInvoiceIdColumn();
   await ensureEmployeeShopIdColumn();
+  await ensureUserRoleEnum();
 }
 
 module.exports = {
   ensureSchema,
   ensureSaleInvoiceIdColumn,
   ensureEmployeeShopIdColumn,
+  ensureUserRoleEnum,
 };

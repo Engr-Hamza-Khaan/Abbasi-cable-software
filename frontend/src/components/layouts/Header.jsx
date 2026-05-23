@@ -8,10 +8,17 @@ import {
 } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
 
-function Header({ sidebarCollapsed, onToggleSidebar, mobileMenuOpen, theme, toggleTheme, user }) {
+function Header({ sidebarCollapsed, onToggleSidebar, mobileMenuOpen, theme, toggleTheme, user, hideShopSelector }) {
   const { selectedShopId, setSelectedShopId, shops, getSelectedShopName } = useShop();
 
-  const shopSelector = user?.role === 'admin' ? (
+  const roleLabel =
+    user?.role === 'super-admin'
+      ? 'Super Admin'
+      : user?.role === 'admin'
+        ? 'Administrator'
+        : 'Employee';
+
+  const shopSelector = !hideShopSelector && user?.role === 'admin' ? (
     <div className="relative group w-full">
       <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
         <Store className="h-5 w-5 text-blue-500 shrink-0" />
@@ -31,11 +38,18 @@ function Header({ sidebarCollapsed, onToggleSidebar, mobileMenuOpen, theme, togg
         <Filter className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
       </div>
     </div>
-  ) : (
+  ) : !hideShopSelector ? (
     <div className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2.5 px-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl min-w-0">
       <Store className="h-5 w-5 text-blue-500 shrink-0" />
       <span className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider truncate">
         {getSelectedShopName()}
+      </span>
+    </div>
+  ) : (
+    <div className="flex items-center justify-center gap-2 w-full py-2.5 px-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl min-w-0">
+      <Store className="h-5 w-5 text-blue-500 shrink-0" />
+      <span className="text-sm font-bold text-slate-800 dark:text-white truncate">
+        Super Admin Panel
       </span>
     </div>
   );
@@ -105,7 +119,7 @@ function Header({ sidebarCollapsed, onToggleSidebar, mobileMenuOpen, theme, togg
                 {user?.name || 'User'}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 capitalize truncate">
-                {user?.role === 'admin' ? 'Administrator' : 'Employee'}
+                {roleLabel}
               </p>
             </div>
           </div>

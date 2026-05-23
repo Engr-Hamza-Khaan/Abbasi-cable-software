@@ -24,8 +24,19 @@ import Ledger from './components/ledger/Ledger';
 import Bulty from './components/bulty/Bulty';
 import ReminderPage from './components/reminders/ReminderPage';
 import ActivityLogPage from './components/activity/ActivityLogPage';
+import SuperAdminApp from './components/superadmin/SuperAdminApp';
 
-const AppContent = () => {
+const PublicRoutes = () => (
+  <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Signup />} />
+    <Route path="/forgot-password" element={<ForgotPassword />} />
+    <Route path="/reset-password/:token" element={<ResetPassword />} />
+    <Route path="*" element={<Navigate to="/login" replace />} />
+  </Routes>
+);
+
+const MainAppContent = () => {
   const { user, logout } = useAuth();
   const {
     productsWithTotalStock,
@@ -82,18 +93,6 @@ const AppContent = () => {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-
-  if (!user) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    );
-  }
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500">
@@ -256,14 +255,38 @@ const AppContent = () => {
   );
 };
 
+function AppShell() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <PublicRoutes />;
+  }
+
+  if (user.role === 'super-admin') {
+    return <SuperAdminApp />;
+  }
+
+  return (
+    <InventoryProvider>
+      <MainAppContent />
+    </InventoryProvider>
+  );
+}
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <ShopProvider>
-          <InventoryProvider>
-            <AppContent />
-          </InventoryProvider>
+          <AppShell />
         </ShopProvider>
       </AuthProvider>
     </Router>
