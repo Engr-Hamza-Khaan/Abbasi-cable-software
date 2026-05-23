@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../layouts/Sidebar';
 import Header from '../layouts/Header';
 import ShopManagement from '../shops/ShopManagement';
-import { Zap, Store, LogOut } from 'lucide-react';
+import AdminManagement from '../users/AdminManagement';
+import { Zap, Store, LogOut, ShieldCheck } from 'lucide-react';
 
 const SuperAdminApp = () => {
   const { user, logout } = useAuth();
@@ -32,7 +33,7 @@ const SuperAdminApp = () => {
 
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
-  const goToShops = (id) => {
+  const goToPage = (id) => {
     setCurrentPage(id);
     navigate(`/${id}`);
     closeMobileMenu();
@@ -70,10 +71,10 @@ const SuperAdminApp = () => {
               )}
             </div>
           </div>
-          <nav className="flex-1 p-4">
+          <nav className="flex-1 p-4 space-y-2">
             <button
               type="button"
-              onClick={() => goToShops('shops')}
+              onClick={() => goToPage('shops')}
               className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
                 currentPage === 'shops'
                   ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
@@ -83,6 +84,20 @@ const SuperAdminApp = () => {
               <Store className="w-5 h-5" />
               {(!sideBarCollapsed || mobileMenuOpen) && (
                 <span className="font-medium">Shops</span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => goToPage('admins')}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+                currentPage === 'admins'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              <ShieldCheck className="w-5 h-5" />
+              {(!sideBarCollapsed || mobileMenuOpen) && (
+                <span className="font-medium">Admins</span>
               )}
             </button>
           </nav>
@@ -126,6 +141,7 @@ const SuperAdminApp = () => {
             <div className="page-content">
               <Routes>
                 <Route path="/shops" element={<ShopManagement />} />
+                <Route path="/admins" element={<AdminManagement />} />
                 <Route path="/" element={<Navigate to="/shops" replace />} />
                 <Route path="*" element={<Navigate to="/shops" replace />} />
               </Routes>

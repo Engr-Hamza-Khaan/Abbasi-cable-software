@@ -75,21 +75,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (name, username, email, password, role, shopId) => {
+  const createUser = async ({ name, username, email, password, role, shopId }) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
-        name,
-        username,
-        email,
-        password,
-        role,
-        shopId,
-      });
-      return { success: true, message: response.data.message };
+      const storedUser = user || JSON.parse(localStorage.getItem('abbasi-cable-user') || 'null');
+      const response = await axios.post(
+        'http://localhost:5000/api/auth/register',
+        { name, username, email, password, role, shopId },
+        { headers: { Authorization: `Bearer ${storedUser?.token}` } }
+      );
+      return { success: true, message: response.data.message, user: response.data };
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Signup failed',
+        message: error.response?.data?.message || 'Failed to create user',
       };
     }
   };
@@ -101,7 +99,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, shops, selectedShopId, setSelectedShopId }}>
+    <AuthContext.Provider value={{ user, loading, login, createUser, logout, shops, selectedShopId, setSelectedShopId }}>
       {!loading && children}
     </AuthContext.Provider>
   );

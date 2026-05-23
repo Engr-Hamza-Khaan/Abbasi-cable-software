@@ -18,7 +18,7 @@ const ActivityLog = sequelize.define(
       },
     },
     userRole: {
-      type: DataTypes.ENUM('admin', 'employee'),
+      type: DataTypes.STRING,
       allowNull: true,
     },
     shopId: {
@@ -65,6 +65,8 @@ const ActivityLog = sequelize.define(
       { fields: ['shopId'] },
       { fields: ['createdAt'] },
       { fields: ['userId'] },
+      { fields: ['shopId', 'createdAt'] },
+      { fields: ['userRole', 'createdAt'] },
     ],
   }
 );

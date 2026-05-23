@@ -27,10 +27,19 @@ async function ensureUserRoleEnum() {
   `);
 }
 
+async function ensureActivityLogUserRoleColumn() {
+  await sequelize.query(`
+    ALTER TABLE "ActivityLogs"
+    ALTER COLUMN "userRole" TYPE VARCHAR(32)
+    USING "userRole"::text;
+  `).catch(() => {});
+}
+
 async function ensureSchema() {
   await ensureSaleInvoiceIdColumn();
   await ensureEmployeeShopIdColumn();
   await ensureUserRoleEnum();
+  await ensureActivityLogUserRoleColumn();
 }
 
 module.exports = {
@@ -38,4 +47,5 @@ module.exports = {
   ensureSaleInvoiceIdColumn,
   ensureEmployeeShopIdColumn,
   ensureUserRoleEnum,
+  ensureActivityLogUserRoleColumn,
 };

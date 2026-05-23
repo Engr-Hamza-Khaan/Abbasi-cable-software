@@ -48,6 +48,7 @@ const adminMenuItems = [
     icon: Users,
     label: "User Management",
     submenu: [
+      { id: 'employees', label: "Employees", icon: Users },
       { id: 'activity-logs', label: "Activity Log", icon: History },
     ],
   },

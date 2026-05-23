@@ -8,11 +8,13 @@ const SENSITIVE_KEYS = [
   'authorization',
 ];
 
+const MAX_METADATA_BYTES = 512;
+
 const sanitizeMetadata = (body) => {
-  if (!body || typeof body !== 'object') return null;
-  const copy = Array.isArray(body) ? [...body] : { ...body };
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  const copy = { ...body };
   const scrub = (obj) => {
-    if (!obj || typeof obj !== 'object') return;
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
     Object.keys(obj).forEach((key) => {
       if (SENSITIVE_KEYS.some((k) => key.toLowerCase().includes(k))) {
         delete obj[key];
@@ -22,6 +24,12 @@ const sanitizeMetadata = (body) => {
     });
   };
   scrub(copy);
+  try {
+    const serialized = JSON.stringify(copy);
+    if (serialized.length > MAX_METADATA_BYTES) return null;
+  } catch {
+    return null;
+  }
   return copy;
 };
 

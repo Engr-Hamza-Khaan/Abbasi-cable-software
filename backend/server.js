@@ -6,6 +6,7 @@ const cors = require('cors');
 const sequelize = require('./config/db');
 require('./models'); // Register associations
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 const shopRoutes = require('./routes/shopRoutes');
 const reminderRoutes = require('./routes/reminderRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -52,6 +53,7 @@ app.use(activityLogger);
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/products', productRoutes);

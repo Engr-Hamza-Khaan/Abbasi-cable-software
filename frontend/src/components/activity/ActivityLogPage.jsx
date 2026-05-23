@@ -87,7 +87,7 @@ const ActivityLogPage = () => {
             Activity Log
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            All application actions are recorded with date and time. Admin and employee activity are shown separately.
+            Create, update, and delete actions are recorded with date and time. Admin and employee activity are shown separately.
           </p>
         </div>
         <button

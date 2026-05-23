@@ -4,13 +4,33 @@ const Shop = require('../models/Shop');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const { Op } = require('sequelize');
-// @desc    Register user
+// @desc    Create user (super-admin creates admin, admin creates employee)
 // @route   POST /api/auth/register
-// @access  Public (Allowed initially for creating admin)
+// @access  Private (super-admin, admin)
 const registerUser = async (req, res) => {
   const { name, username, email, password, role, shopId } = req.body;
+  const requestedRole = role || 'employee';
 
   try {
+    if (requestedRole === 'super-admin') {
+      return res.status(403).json({ message: 'Super admin accounts cannot be created via registration' });
+    }
+
+    if (req.user.role === 'super-admin') {
+      if (requestedRole !== 'admin') {
+        return res.status(403).json({ message: 'Super admin can only create admin accounts' });
+      }
+    } else if (req.user.role === 'admin') {
+      if (requestedRole !== 'employee') {
+        return res.status(403).json({ message: 'Admin can only create employee accounts' });
+      }
+      if (!shopId) {
+        return res.status(400).json({ message: 'Shop is required for employee' });
+      }
+    } else {
+      return res.status(403).json({ message: 'Not authorized to create users' });
+    }
+
     const userExists = await User.findOne({ where: { username } });
     const emailExists = await User.findOne({ where: { email } });
 
@@ -21,11 +41,7 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
-    if (role === 'super-admin') {
-      return res.status(403).json({ message: 'Super admin accounts cannot be created via registration' });
-    }
-
-    if (role === 'employee' && !shopId) {
+    if (requestedRole === 'employee' && !shopId) {
       return res.status(400).json({ message: 'Shop is required for employee' });
     }
 
@@ -41,18 +57,19 @@ const registerUser = async (req, res) => {
       username,
       email,
       password,
-      role: role || 'employee',
-      shopId: role === 'employee' ? shopId : null,
+      role: requestedRole,
+      shopId: requestedRole === 'employee' ? shopId : null,
     });
 
     if (user) {
+      const created = await User.findByPk(user.id, {
+        attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpire'] },
+        include: [{ model: Shop, attributes: ['id', 'name'] }],
+      });
+
       res.status(201).json({
         message: 'User registered successfully. Please login.',
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        role: user.role,
-        shopId: user.shopId,
+        ...created.toJSON(),
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });

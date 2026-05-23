@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ShopProvider } from './context/ShopContext';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import Login from './components/auth/Login';
-import Signup from './components/auth/Signup';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import PrivateRoute from './components/routing/PrivateRoute';
@@ -25,11 +24,11 @@ import Bulty from './components/bulty/Bulty';
 import ReminderPage from './components/reminders/ReminderPage';
 import ActivityLogPage from './components/activity/ActivityLogPage';
 import SuperAdminApp from './components/superadmin/SuperAdminApp';
+import EmployeeManagement from './components/users/EmployeeManagement';
 
 const PublicRoutes = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Signup />} />
     <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route path="/reset-password/:token" element={<ResetPassword />} />
     <Route path="*" element={<Navigate to="/login" replace />} />
@@ -243,6 +242,7 @@ const MainAppContent = () => {
                   <Route path="/reminders" element={<ReminderPage />} />
                   <Route path="/bulty" element={<Bulty getWriteShopId={getWriteShopId} />} />
                   <Route path="/activity-logs" element={<ActivityLogPage />} />
+                  <Route path="/employees" element={<EmployeeManagement />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

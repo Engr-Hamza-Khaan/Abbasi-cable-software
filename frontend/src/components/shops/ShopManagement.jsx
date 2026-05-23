@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Store, Plus, MapPin, Phone, Loader2 } from 'lucide-react';
+import { Store, Plus, MapPin, Phone, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import EditShopModal from './EditShopModal';
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -9,46 +10,81 @@ const ShopManagement = () => {
   const { user } = useAuth();
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
   const [success, setSuccess] = useState('');
   const [form, setForm] = useState({ name: '', location: '', phone: '' });
+  const [editingShop, setEditingShop] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-  const getAuthConfig = () => ({
-    headers: { Authorization: `Bearer ${user?.token}` },
-  });
+  const token = user?.token;
 
-  const fetchShops = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const { data } = await axios.get(`${API_BASE}/shops`);
-      setShops(data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load shops');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const getAuthConfig = useCallback(
+    () => ({ headers: { Authorization: `Bearer ${token}` } }),
+    [token]
+  );
+
+  const fetchShops = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      setListError('');
+      try {
+        const { data } = await axios.get(`${API_BASE}/shops`);
+        setShops(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setListError(err.response?.data?.message || 'Failed to load shops');
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     fetchShops();
-  }, []);
+  }, [fetchShops]);
+
+  const upsertShop = (savedShop) => {
+    setShops((prev) => {
+      const idx = prev.findIndex((s) => s.id === savedShop.id);
+      if (idx === -1) return [savedShop, ...prev];
+      const next = [...prev];
+      next[idx] = savedShop;
+      return next;
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    setError('');
+    setFormError('');
     setSuccess('');
     try {
       const { data } = await axios.post(`${API_BASE}/shops`, form, getAuthConfig());
-      setShops((prev) => [...prev, data]);
+      upsertShop(data);
       setForm({ name: '', location: '', phone: '' });
       setSuccess('Shop created successfully.');
+      await fetchShops(true);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create shop');
+      setFormError(err.response?.data?.message || 'Failed to create shop');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (shop) => {
+    if (!window.confirm(`Delete "${shop.name}"? This cannot be undone.`)) return;
+
+    setDeletingId(shop.id);
+    setListError('');
+    try {
+      await axios.delete(`${API_BASE}/shops/${shop.id}`, getAuthConfig());
+      setShops((prev) => prev.filter((s) => s.id !== shop.id));
+    } catch (err) {
+      setListError(err.response?.data?.message || 'Failed to delete shop');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -73,9 +109,9 @@ const ShopManagement = () => {
             <h3 className="text-lg font-bold text-slate-800 dark:text-white">Add New Shop</h3>
           </div>
 
-          {error && (
+          {formError && (
             <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm border border-red-200 dark:border-red-800">
-              {error}
+              {formError}
             </div>
           )}
           {success && (
@@ -136,6 +172,12 @@ const ShopManagement = () => {
             </h3>
           </div>
 
+          {listError && (
+            <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm border border-red-200 dark:border-red-800">
+              {listError}
+            </div>
+          )}
+
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
@@ -149,25 +191,61 @@ const ShopManagement = () => {
                   key={shop.id}
                   className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700"
                 >
-                  <p className="font-bold text-slate-800 dark:text-white">{shop.name}</p>
-                  {shop.location && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
-                      <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      {shop.location}
-                    </p>
-                  )}
-                  {shop.phone && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
-                      <Phone className="w-3.5 h-3.5 shrink-0" />
-                      {shop.phone}
-                    </p>
-                  )}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-slate-800 dark:text-white truncate">{shop.name}</p>
+                      {shop.location && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">{shop.location}</span>
+                        </p>
+                      )}
+                      {shop.phone && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                          <Phone className="w-3.5 h-3.5 shrink-0" />
+                          {shop.phone}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setEditingShop(shop)}
+                        className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                        title="Edit shop"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(shop)}
+                        disabled={deletingId === shop.id}
+                        className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+                        title="Delete shop"
+                      >
+                        {deletingId === shop.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
       </div>
+
+      {editingShop && (
+        <EditShopModal
+          shop={editingShop}
+          token={token}
+          onClose={() => setEditingShop(null)}
+          onSaved={(updated) => upsertShop(updated)}
+        />
+      )}
     </div>
   );
 };

@@ -16,7 +16,10 @@ const getActivityLogs = asyncHandler(async (req, res) => {
     endDate,
   } = req.query;
 
-  const where = {};
+  const where = {
+    method: { [Op.in]: ['POST', 'PUT', 'PATCH', 'DELETE'] },
+    userRole: { [Op.in]: ['admin', 'employee'] },
+  };
 
   if (role === 'admin' || role === 'employee') {
     where.userRole = role;
