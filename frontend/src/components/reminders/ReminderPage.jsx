@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MessageSquare, Plus, Bell, CheckCircle, AlertCircle, Phone, Calendar, DollarSign, Send, RefreshCw } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
+import { apiUrl } from '../../config/api';
 
-const API_URL = 'http://localhost:5000/api/reminders/customers';
+const REMINDERS_API = apiUrl('/reminders/customers');
 
 const ReminderPage = () => {
   const { getShopQueryParams, selectedShopId } = useShop();
@@ -43,7 +44,7 @@ const ReminderPage = () => {
   const fetchDues = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(API_URL, { params: getShopQueryParams() });
+      const response = await axios.get(REMINDERS_API, { params: getShopQueryParams() });
       if (response.data.success) {
         setCustomers(response.data.data);
       }
@@ -85,7 +86,7 @@ const ReminderPage = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(API_URL, formData, { params: getShopQueryParams() });
+      const response = await axios.post(REMINDERS_API, formData, { params: getShopQueryParams() });
       if (response.data.success) {
         setSuccess('Reminder scheduled successfully!');
         setShowModal(false);
@@ -101,7 +102,7 @@ const ReminderPage = () => {
 
   const handleMarkPaid = async (id) => {
     try {
-      await axios.put(`${API_URL}/${id}`, { paymentStatus: 'Paid' }, { params: getShopQueryParams() });
+      await axios.put(`${REMINDERS_API}/${id}`, { paymentStatus: 'Paid' }, { params: getShopQueryParams() });
       fetchDues();
     } catch (err) {
       console.error('Error marking as paid:', err);
@@ -111,9 +112,9 @@ const ReminderPage = () => {
   const handleSendSms = async (id) => {
     setSendingSmsId(id);
     console.log(`[Frontend Debug] Attempting to send SMS for Customer ID: ${id}`);
-    console.log(`[Frontend Debug] Request URL: ${API_URL}/${id}/send-sms`);
+    console.log(`[Frontend Debug] Request URL: ${REMINDERS_API}/${id}/send-sms`);
     try {
-      const response = await axios.post(`${API_URL}/${id}/send-sms`, null, { params: getShopQueryParams() });
+      const response = await axios.post(`${REMINDERS_API}/${id}/send-sms`, null, { params: getShopQueryParams() });
       console.log(`[Frontend Debug] Success API Response:`, response.data);
       if (response.data.success) {
         setSuccess('SMS sent successfully!');

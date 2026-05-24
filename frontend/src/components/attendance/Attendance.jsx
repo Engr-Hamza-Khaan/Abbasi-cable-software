@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, UserCheck, UserX, Clock, Search, RefreshCw, Cpu, Wifi, WifiOff } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useShop } from '../../context/ShopContext';
 import socket from '../../utils/socket';
 
@@ -21,8 +21,8 @@ const Attendance = () => {
     try {
       if (!silent) setLoading(true);
       const [logsRes, statsRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/attendance/logs?shopId=${selectedShopId}&date=${selectedDate}`),
-        axios.get(`http://localhost:5000/api/attendance/stats?shopId=${selectedShopId}`)
+        api.get('/attendance/logs', { params: { shopId: selectedShopId, date: selectedDate } }),
+        api.get('/attendance/stats', { params: { shopId: selectedShopId } }),
       ]);
 
       if (logsRes.data.success) setLogs(logsRes.data.data);

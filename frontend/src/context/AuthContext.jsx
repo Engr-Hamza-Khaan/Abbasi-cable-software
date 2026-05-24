@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -13,7 +14,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchShops = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/shops');
+      const response = await api.get('/shops');
       setShops(response.data);
       
       // Auto-select first shop if none selected or stored shop is invalid
@@ -57,7 +58,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await api.post('/auth/login', {
         username,
         password,
       });
@@ -78,8 +79,8 @@ export const AuthProvider = ({ children }) => {
   const createUser = async ({ name, username, email, password, role, shopId }) => {
     try {
       const storedUser = user || JSON.parse(localStorage.getItem('abbasi-cable-user') || 'null');
-      const response = await axios.post(
-        'http://localhost:5000/api/auth/register',
+      const response = await api.post(
+        '/auth/register',
         { name, username, email, password, role, shopId },
         { headers: { Authorization: `Bearer ${storedUser?.token}` } }
       );

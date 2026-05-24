@@ -4,8 +4,7 @@ import { User, Mail, Store, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import CreateUserForm from './CreateUserForm';
 import EditUserModal from './EditUserModal';
-
-const API_BASE = 'http://localhost:5000/api';
+import { apiUrl } from '../../config/api';
 
 const UserManagement = ({
   role,
@@ -88,7 +87,7 @@ const UserManagement = ({
     setDeletingId(target.id);
     setListError('');
     try {
-      await axios.delete(`${API_BASE}/users/${target.id}`, getAuthConfig());
+      await axios.delete(apiUrl(`/users/${target.id}`), getAuthConfig());
       setUsers((prev) => prev.filter((u) => u.id !== target.id));
     } catch (err) {
       setListError(err.response?.data?.message || 'Failed to delete user');

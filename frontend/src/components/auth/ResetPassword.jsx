@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, AlertCircle, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -24,7 +24,7 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const response = await axios.put(`/api/auth/resetpassword/${token}`, { password });
+      const response = await api.put(`/auth/resetpassword/${token}`, { password });
       if (response.data.success) {
         setSuccess(true);
         setTimeout(() => {

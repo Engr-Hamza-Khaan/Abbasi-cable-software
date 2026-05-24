@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Lock, AlertCircle, Loader2, Store } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000/api';
+import { apiUrl } from '../../config/api';
 
 const EditUserModal = ({ user, role, token, onClose, onSaved }) => {
   const [name, setName] = useState(user.name || '');
@@ -16,7 +16,7 @@ const EditUserModal = ({ user, role, token, onClose, onSaved }) => {
 
   useEffect(() => {
     if (role !== 'employee') return;
-    axios.get(`${API_BASE}/shops`).then(({ data }) => setShops(data)).catch(() => {});
+    axios.get(apiUrl('/shops')).then(({ data }) => setShops(data)).catch(() => {});
   }, [role]);
 
   const handleSubmit = async (e) => {
@@ -29,7 +29,7 @@ const EditUserModal = ({ user, role, token, onClose, onSaved }) => {
       if (password) payload.password = password;
       if (role === 'employee') payload.shopId = shopId;
 
-      const { data } = await axios.put(`${API_BASE}/users/${user.id}`, payload, {
+      const { data } = await axios.put(apiUrl(`/users/${user.id}`), payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       onSaved(data);

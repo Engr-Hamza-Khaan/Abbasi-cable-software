@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiUrl } from '../config/api';
 
 /**
  * Manually log an activity to the backend.
@@ -18,7 +19,7 @@ export const logActivity = async (action, resource, resourceId = null, details =
     const user = JSON.parse(storedUser);
     
     // We send a POST to the manual log endpoint
-    await axios.post('http://localhost:5000/api/logs/manual', {
+    await axios.post(apiUrl('/logs/manual'), {
       action,
       resource,
       resourceId,

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from './AuthContext';
 import { getMainBranchShopId, resolveAdminShopId } from '../utils/shopUtils';
 
@@ -16,7 +16,7 @@ export const ShopProvider = ({ children }) => {
   useEffect(() => {
     const fetchShops = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/shops');
+        const response = await api.get('/shops');
         const shopList = response.data;
         setShops(shopList);
 

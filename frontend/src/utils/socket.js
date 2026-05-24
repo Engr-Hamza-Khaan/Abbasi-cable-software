@@ -1,7 +1,9 @@
 import { io } from 'socket.io-client';
+import { SOCKET_ORIGIN } from '../config/api';
 
-// Use environment variable or fallback to localhost
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const SOCKET_URL = SOCKET_ORIGIN;
+
+console.log('SOCKET_URL', SOCKET_URL);
 
 const socket = io(SOCKET_URL, {
   autoConnect: true,

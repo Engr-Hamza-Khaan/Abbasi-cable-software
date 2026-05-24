@@ -3,8 +3,7 @@ import axios from 'axios';
 import { Store, Plus, MapPin, Phone, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import EditShopModal from './EditShopModal';
-
-const API_BASE = 'http://localhost:5000/api';
+import { apiUrl } from '../../config/api';
 
 const ShopManagement = () => {
   const { user } = useAuth();
@@ -30,7 +29,7 @@ const ShopManagement = () => {
       if (!silent) setLoading(true);
       setListError('');
       try {
-        const { data } = await axios.get(`${API_BASE}/shops`);
+        const { data } = await axios.get(apiUrl('/shops'));
         setShops(Array.isArray(data) ? data : []);
       } catch (err) {
         setListError(err.response?.data?.message || 'Failed to load shops');
@@ -61,7 +60,7 @@ const ShopManagement = () => {
     setFormError('');
     setSuccess('');
     try {
-      const { data } = await axios.post(`${API_BASE}/shops`, form, getAuthConfig());
+      const { data } = await axios.post(apiUrl('/shops'), form, getAuthConfig());
       upsertShop(data);
       setForm({ name: '', location: '', phone: '' });
       setSuccess('Shop created successfully.');
@@ -79,7 +78,7 @@ const ShopManagement = () => {
     setDeletingId(shop.id);
     setListError('');
     try {
-      await axios.delete(`${API_BASE}/shops/${shop.id}`, getAuthConfig());
+      await axios.delete(apiUrl(`/shops/${shop.id}`), getAuthConfig());
       setShops((prev) => prev.filter((s) => s.id !== shop.id));
     } catch (err) {
       setListError(err.response?.data?.message || 'Failed to delete shop');

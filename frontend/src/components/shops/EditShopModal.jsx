@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000/api';
+import { apiUrl } from '../../config/api';
 
 const EditShopModal = ({ shop, token, onClose, onSaved }) => {
   const [name, setName] = useState(shop.name || '');
@@ -18,7 +18,7 @@ const EditShopModal = ({ shop, token, onClose, onSaved }) => {
 
     try {
       const { data } = await axios.put(
-        `${API_BASE}/shops/${shop.id}`,
+        apiUrl(`/shops/${shop.id}`),
         { name, location, phone },
         { headers: { Authorization: `Bearer ${token}` } }
       );

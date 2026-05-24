@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { User, Lock, AlertCircle, Loader2, ShieldCheck, Store } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000/api';
+import { apiUrl } from '../../config/api';
 
 const CreateUserForm = ({ role, onSubmit, submitting, error, success, onClearMessages }) => {
   const [name, setName] = useState('');
@@ -18,7 +18,7 @@ const CreateUserForm = ({ role, onSubmit, submitting, error, success, onClearMes
 
     const fetchShops = async () => {
       try {
-        const { data } = await axios.get(`${API_BASE}/shops`);
+        const { data } = await axios.get(apiUrl('/shops'));
         setShops(data);
       } catch (err) {
         console.error('Error fetching shops:', err);
